@@ -1,7 +1,7 @@
 import pygame
-import random
 import sys
 import time
+import random
 
 # Initialize pygame
 pygame.init()
@@ -9,303 +9,210 @@ pygame.init()
 # Screen Setup
 WIDTH, HEIGHT = 800, 600
 Window = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Platformer Game')
+pygame.display.set_caption('Platformer Game - Power-Ups & Enhanced Boss Fight')
 
 # Colors
 white = (255, 255, 255)
-black = (0, 0, 0)
-green = (21, 207, 14)
 red = (255, 0, 0)
-blue = (0, 14, 204)
-brown = (216, 180, 119)
-dark_red = (155, 45, 36)
+green = (21, 207, 14)
+black = (0, 0, 0)
+gold = (255, 215, 0)
+blue = (0, 0, 255)
+purple = (128, 0, 128)
 
 # Fonts
-tinyfont = pygame.font.SysFont('calibri', 18)
 smallfont = pygame.font.SysFont('timesnewroman', 25)
 medfont = pygame.font.SysFont('timesnewroman', 40)
-largefont = pygame.font.SysFont('timesnewroman', 75)
-font = pygame.font.SysFont(None, 25)
 clock = pygame.time.Clock()
 
 # Player Setup
 player_width = 50
 player_height = 50
-player_color = green
 player_x = 100
 player_y = HEIGHT - player_height - 100
 player_velocity = 5
 player_jump_velocity = -12
-is_jumping = False
-jump_height = 10
-
-# Platform Setup
-platform_color = blue
-platforms = [(0, HEIGHT - 50, WIDTH, 50)]  # Ground platform
-
-# Game Variables
 gravity = 0.8
 player_velocity_y = 0
-is_game_over = False
-level = 1  # Start with level 1
+is_jumping = False
+health = 100
+score = 0
+invincible = False
+speed_boost = False
+power_up_timer = 0
 
+# Load Images and Sounds
+player_run = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png")
+player_jump = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png")
+coin_image = pygame.image.load("assets/coin.png")
+boss_image = pygame.image.load("assets/boss.png")
+power_up_image = pygame.image.load("assets/power_up.png")
+jump_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/jump-up-245782.mp3")
+hit_sound = pygame.mixer.Sound("assets/hit.wav")
+coin_sound = pygame.mixer.Sound("assets/coin.wav")
+power_up_sound = pygame.mixer.Sound("assets/power_up.wav")
+bg_music = "/Users/lucascarino/PycharmProjects/More list/Platformer game/background_music.mp3"
 
-# Load images
-def load_image(image_path):
-    try:
-        image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/mainmenu.jpg")
-        return pygame.transform.scale(image, (800, 600))  # Rescale image
-    except pygame.error as e:
-        print(f"Error loading image: {e}")
-        return None
+# Background Music
+pygame.mixer.music.load(bg_music)
+pygame.mixer.music.play(-1)
 
+# Power-Up Types
+POWER_UPS = ["speed_boost", "invincibility", "health_restore"]
 
-main_menu_img = load_image('/Users/lucascarino/PycharmProjects/More list/Platformer game/mainmenu.jpg')
+# Parallax Variables
+bg_x = 0
+bg_scroll_speed = 2
 
-
-# Enemy Class
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, color):
+# Coin Class
+class Coin(pygame.sprite.Sprite):
+    def __init__(self, x, y):
         super().__init__()
-        self.image = pygame.Surface((width, height))
-        self.image.fill(color)
-        self.rect = self.image.get_rect()
-        self.rect.x = x
-        self.rect.y = y
-        self.width = width
-        self.height = height
-        self.speed = 2
+        self.image = pygame.transform.scale(coin_image, (30, 30))
+        self.rect = self.image.get_rect(topleft=(x, y))
+
+# PowerUp Class
+class PowerUp(pygame.sprite.Sprite):
+    def __init__(self, x, y, power_type):
+        super().__init__()
+        self.image = pygame.transform.scale(power_up_image, (40, 40))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.type = power_type
+
+# BossEnemy Class with Attack Patterns
+class BossEnemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height):
+        super().__init__()
+        self.image = pygame.transform.scale(boss_image, (width, height))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.health = 100
+        self.speed = 3
+        self.attack_timer = 0
+        self.is_charging = False
 
     def update(self):
-        self.rect.x -= self.speed
-        if self.rect.x < -self.width:
-            self.rect.x = WIDTH
+        if self.is_charging:
+            self.rect.x -= self.speed * 2
+        else:
+            self.rect.x -= self.speed
 
+        if self.rect.x < 0 or self.rect.x > WIDTH - self.rect.width:
+            self.speed *= -1
 
-# Timer Setup
-start_time = time.time()
+        # Randomize attack pattern
+        self.attack_timer += 1
+        if self.attack_timer > 200:
+            self.attack_pattern()
+            self.attack_timer = 0
 
-# Leaderboard Setup
-highscores = {"Level 1": 0, "Level 2": 0, "Level 3": 0}
+    def attack_pattern(self):
+        # Choose a random attack
+        attack_choice = random.choice(["charge", "shoot"])
+        if attack_choice == "charge":
+            self.is_charging = True
+        else:
+            self.is_charging = False
 
+# Health Bar
+def draw_health_bar():
+    pygame.draw.rect(Window, red, (20, 20, 200, 20))
+    pygame.draw.rect(Window, green, (20, 20, 2 * health, 20))
 
-# Text and Button functions
-def text_objects(text, colour, size='small'):
-    if size == 'tiny':
-        textSurface = tinyfont.render(text, True, colour)
-    if size == 'small':
-        textSurface = smallfont.render(text, True, colour)
-    if size == 'medium':
-        textSurface = medfont.render(text, True, colour)
-    if size == 'large':
-        textSurface = largefont.render(text, True, colour)
+# Score Display
+def draw_score():
+    score_text = smallfont.render(f"Score: {score}", True, black)
+    Window.blit(score_text, (WIDTH - 150, 20))
 
-    return textSurface, textSurface.get_rect()
-
-
-def text_to_button(msg, colour, button_x, button_y, button_width, button_height, size='small'):
-    textSurf, textRect = text_objects(msg, colour, size)
-    textRect.center = ((button_x + (button_width / 2)), button_y + (button_height / 2))
-    Window.blit(textSurf, textRect)
-
-
-def message_to_screen(msg, colour, cordy=0, size='small'):
-    textSurf, textRect = text_objects(msg, colour, size)
-    textRect.center = (int(800 / 2), int(600 / 2) + cordy)
-    Window.blit(textSurf, textRect)
-
-
-def draw_player(x, y):
-    pygame.draw.rect(Window, player_color, (x, y, player_width, player_height))
-
-
-def draw_platforms():
-    for plat in platforms:
-        pygame.draw.rect(Window, platform_color, plat)
-
-
-def handle_player_movement():
-    global player_x, player_y, player_velocity_y, is_jumping
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_LEFT]:
-        player_x -= player_velocity
-    if keys[pygame.K_RIGHT]:
-        player_x += player_velocity
-    if keys[pygame.K_UP] and not is_jumping:
-        is_jumping = True
-        player_velocity_y = player_jump_velocity
-
-    # Apply gravity
-    player_y += player_velocity_y
-    if player_y < HEIGHT - player_height - 50:
-        player_velocity_y += gravity  # Simulate gravity
+# Draw Player with Animation
+def draw_player(frame):
+    if invincible:
+        player_color = purple
+    elif speed_boost:
+        player_color = blue
     else:
-        player_y = HEIGHT - player_height - 50  # Reset player to ground level
-        if is_jumping:
-            is_jumping = False
+        player_color = green
 
-    # Prevent player from going off the left side of the screen
-    if player_x < 0:
-        player_x = 0
+    if is_jumping:
+        Window.blit(player_jump, (player_x, player_y))
+    else:
+        Window.blit(player_run[frame // 5], (player_x, player_y))
 
-    # Prevent player from going off the right side of the screen
-    if player_x > WIDTH - player_width:
-        player_x = WIDTH - player_width
+# Parallax Scrolling
+def draw_background():
+    global bg_x
+    Window.fill(white)
+    Window.blit(background_img, (bg_x, 0))
+    Window.blit(background_img, (bg_x + WIDTH, 0))
+    bg_x -= bg_scroll_speed
+    if bg_x <= -WIDTH:
+        bg_x = 0
 
+# Power-Up Effects
+def activate_power_up(power_type):
+    global invincible, speed_boost, health, power_up_timer
+    if power_type == "speed_boost":
+        speed_boost = True
+        power_up_timer = 300
+        power_up_sound.play()
+    elif power_type == "invincibility":
+        invincible = True
+        power_up_timer = 300
+        power_up_sound.play()
+    elif power_type == "health_restore":
+        health = min(health + 30, 100)
+        power_up_sound.play()
 
-def check_collisions():
-    global player_x, player_y
-    for plat in platforms:
-        plat_x, plat_y, plat_w, plat_h = plat
-        if player_y + player_height > plat_y and player_y + player_height < plat_y + 10:
-            if plat_x < player_x + player_width and plat_x + plat_w > player_x:
-                return True
-    return False
+# Main Game Loop
+def game_loop():
+    frame = 0
+    global health, score, invincible, speed_boost, power_up_timer
+    coins = [Coin(random.randint(100, 700), random.randint(100, 500)) for _ in range(10)]
+    power_ups = [PowerUp(random.randint(100, 700), random.randint(100, 500), random.choice(POWER_UPS)) for _ in range(5)]
+    boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150)
 
-
-def check_enemy_collisions():
-    global player_x, player_y
-    for enemy in enemies:
-        if enemy.rect.x < player_x + player_width and enemy.rect.x + enemy.width > player_x:
-            if enemy.rect.y < player_y + player_height and enemy.rect.y + enemy.height > player_y:
-                return True
-    return False
-
-
-def level_1():
-    global platforms, enemies
-    platforms = [(0, HEIGHT - 50, WIDTH, 50)]  # Ground level platform only
-    enemies = [Enemy(600, HEIGHT - 100, 50, 50, red)]  # Add enemies to the level
     while True:
-        Window.fill(white)
-        message_to_screen('Level 1 - Easy', red, -200, 'large')
-        message_to_screen('Press LEFT/RIGHT to move and UP to jump', black, 50, 'small')
-        draw_player(player_x, player_y)
-        draw_platforms()
+        draw_background()
+        draw_player(frame)
+        draw_health_bar()
+        draw_score()
 
-        for enemy in enemies:
-            enemy.update()
-            Window.blit(enemy.image, enemy.rect)
+        # Update and draw coins
+        for coin in coins:
+            Window.blit(coin.image, coin.rect)
 
-        handle_player_movement()
-        if check_collisions():
-            player_velocity_y = 0  # Stop falling when player lands on a platform
-        if check_enemy_collisions():
-            message_to_screen('Game Over!', red, 0, 'large')
-            pygame.display.update()
-            pygame.time.wait(2000)
-            break
+        # Update and draw power-ups
+        for power_up in power_ups:
+            Window.blit(power_up.image, power_up.rect)
+            if power_up.rect.colliderect((player_x, player_y, player_width, player_height)):
+                activate_power_up(power_up.type)
+                power_ups.remove(power_up)
+
+        # Boss fight logic
+        boss.update()
+        Window.blit(boss.image, boss.rect)
+
+        if invincible:
+            boss.is_charging = False
+
+        if power_up_timer > 0:
+            power_up_timer -= 1
+        else:
+            invincible = False
+            speed_boost = False
+
+        handle_movement()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                quit()
+                sys.exit()
+
+        frame += 1
+        if frame >= 20:
+            frame = 0
 
         pygame.display.update()
         clock.tick(60)
 
-
-def level_2():
-    global platforms, enemies
-    platforms = [(0, HEIGHT - 50, WIDTH, 50), (200, HEIGHT - 150, 200, 10)]  # Added a platform
-    enemies = [Enemy(600, HEIGHT - 100, 50, 50, red), Enemy(500, HEIGHT - 200, 50, 50, red)]  # Add more enemies
-    while True:
-        Window.fill(white)
-        message_to_screen('Level 2 - Medium Difficulty', red, -200, 'large')
-        message_to_screen('Watch out for new platforms and enemies!', black, 50, 'small')
-        draw_player(player_x, player_y)
-        draw_platforms()
-
-        for enemy in enemies:
-            enemy.update()
-            Window.blit(enemy.image, enemy.rect)
-
-        handle_player_movement()
-        if check_collisions():
-            player_velocity_y = 0  # Stop falling when player lands on a platform
-        if check_enemy_collisions():
-            message_to_screen('Game Over!', red, 0, 'large')
-            pygame.display.update()
-            pygame.time.wait(2000)
-            break
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-
-        pygame.display.update()
-        clock.tick(60)
-
-
-def level_3():
-    global platforms, enemies
-    platforms = [(0, HEIGHT - 50, WIDTH, 50), (200, HEIGHT - 150, 200, 10),
-                 (500, HEIGHT - 250, 200, 10)]  # More complex platforms
-    enemies = [Enemy(600, HEIGHT - 100, 50, 50, red), Enemy(400, HEIGHT - 200, 50, 50, red),
-               Enemy(700, HEIGHT - 300, 50, 50, red)]  # Add even more enemies
-    while True:
-        Window.fill(white)
-        message_to_screen('Level 3 - Hard', red, -200, 'large')
-        message_to_screen('Fast enemies and hard jumps!', black, 50, 'small')
-        draw_player(player_x, player_y)
-        draw_platforms()
-
-        for enemy in enemies:
-            enemy.update()
-            Window.blit(enemy.image, enemy.rect)
-
-        handle_player_movement()
-        if check_collisions():
-            player_velocity_y = 0  # Stop falling when player lands on a platform
-        if check_enemy_collisions():
-            message_to_screen('Game Over!', red, 0, 'large')
-            pygame.display.update()
-            pygame.time.wait(2000)
-            break
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-
-        pygame.display.update()
-        clock.tick(60)
-
-
-def intro():
-    while True:
-        Window.fill(white)
-        Window.blit(main_menu_img, (0, 0))
-        message_to_screen('Welcome to the Platformer Game!', red, -200, 'large')
-        message_to_screen('Select a level to play:', black, 100, 'small')
-
-        pygame.draw.rect(Window, green, (125, 450, 150, 50))
-        message_to_screen('Level 1', black, 450, 'small')
-
-        pygame.draw.rect(Window, blue, (325, 450, 150, 50))
-        message_to_screen('Level 2', black, 450, 'small')
-
-        pygame.draw.rect(Window, red, (525, 450, 150, 50))
-        message_to_screen('Level 3', black, 450, 'small')
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            mouse_pos = pygame.mouse.get_pos()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if 125 <= mouse_pos[0] <= 275 and 450 <= mouse_pos[1] <= 500:
-                    level_1()
-                elif 325 <= mouse_pos[0] <= 475 and 450 <= mouse_pos[1] <= 500:
-                    level_2()
-                elif 525 <= mouse_pos[0] <= 675 and 450 <= mouse_pos[1] <= 500:
-                    level_3()
-
-        pygame.display.update()
-        clock.tick(15)
-
-
-# Start the game
-intro()
+# Start the Game
+game_loop()
