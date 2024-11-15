@@ -36,13 +36,26 @@ player_velocity_y = 0
 is_jumping = False
 health = 100
 score = 0
+def scale_image(image, max_width, max_height):
+    original_width, original_height = image.get_size()
+    aspect_ratio = original_width / original_height
+
+    # Determine new width and height while maintaining aspect ratio
+    if max_width / max_height > aspect_ratio:
+        new_width = int(max_height * aspect_ratio)
+        new_height = max_height
+    else:
+        new_width = max_width
+        new_height = int(max_width / aspect_ratio)
+
+    return pygame.transform.scale(image, (new_width, new_height))
 
 # Load Images and Sounds
-player_run = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png")
-player_jump = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png")
-coin_image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin.png")
-boss_image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Michael Jeffrey Jordan.png")
-power_up_image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/crown.png")
+player_run = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"), player_width, player_height)
+player_jump = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"), player_width, player_height)
+coin_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin.png"), 30, 30)
+boss_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Michael Jeffrey Jordan.png"), 150, 150)
+power_up_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/crown.png"), 40, 40)
 bg_music = "/Users/lucascarino/PycharmProjects/More list/Platformer game/background_music.mp3"
 jump_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/jump-up-245782.mp3")
 coin_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin-257878.mp3")
@@ -89,11 +102,20 @@ class BossEnemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = 100
         self.speed = 3
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, speed):
+        super().__init__()
+        self.image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Steph Curry.png")
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.speed = speed
 
     def update(self):
-        self.rect.x -= self.speed
-        if self.rect.x < 0 or self.rect.x > WIDTH - self.rect.width:
+        self.rect.x += self.speed
+        # Reverse direction when hitting the screen boundaries
+        if self.rect.right >= WIDTH or self.rect.left <= 0:
             self.speed *= -1
+
 
 # Game Logic Functions
 def draw_health_bar():
@@ -114,9 +136,7 @@ def draw_background():
     global bg_x
     background_img = pygame.image.load(level_data[current_level]["bg"])
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
-    window.fill(WHITE)
-    window.blit(background_img, (bg_x, 0))
-    window.blit(background_img, (bg_x + WIDTH, 0))
+    window.blit(background_img, (0, 0))
     bg_x -= bg_scroll_speed
     if bg_x <= -WIDTH:
         bg_x = 0
@@ -201,8 +221,10 @@ def level_select():
 def game_loop():
     global health, score, is_jumping, current_level
 
+    # Create coins, power-ups, and enemies
     coins = [Coin(random.randint(100, 700), random.randint(100, 500)) for _ in range(level_data[current_level]["enemy_count"])]
     power_ups = [PowerUp(random.randint(100, 700), random.randint(100, 500), random.choice(POWER_UPS)) for _ in range(3)]
+    enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _ in range(level_data[current_level]["enemy_count"])]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
 
     while True:
@@ -213,16 +235,31 @@ def game_loop():
 
         handle_movement()
 
+        # Draw and update coins
         for coin in coins:
             window.blit(coin.image, coin.rect)
 
+        # Draw and update power-ups
         for power_up in power_ups:
             window.blit(power_up.image, power_up.rect)
 
+        # Draw and update enemies
+        for enemy in enemies:
+            enemy.update()
+            window.blit(enemy.image, enemy.rect)
+
+            # Check collision with the player
+            if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
+               player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
+                health -= 1
+                hit_sound.play()
+
+        # Draw and update boss if present
         if boss:
             boss.update()
             window.blit(boss.image, boss.rect)
 
+        # Check for game exit
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
