@@ -1,6 +1,5 @@
 import pygame
 import sys
-import time
 import random
 
 # Initialize pygame
@@ -8,23 +7,23 @@ pygame.init()
 
 # Screen Setup
 WIDTH, HEIGHT = 800, 600
-Window = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Platformer Game - Power-Ups & Enhanced Boss Fight')
+window = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('Platformer Game')
 
 # Colors
-white = (255, 255, 255)
-red = (255, 0, 0)
-green = (21, 207, 14)
-black = (0, 0, 0)
-gold = (255, 215, 0)
-blue = (0, 0, 255)
-purple = (128, 0, 128)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (21, 207, 14)
+BLUE = (0, 0, 255)
+YELLOW = (255, 215, 0)
 
 # Fonts
-smallfont = pygame.font.SysFont('timesnewroman', 25)
-medfont = pygame.font.SysFont('timesnewroman', 40)
+smallfont = pygame.font.SysFont('Arial', 25)
+medfont = pygame.font.SysFont('Arial', 40)
+largefont = pygame.font.SysFont('Arial', 60)
 clock = pygame.time.Clock()
-#hey
+
 # Player Setup
 player_width = 50
 player_height = 50
@@ -37,41 +36,45 @@ player_velocity_y = 0
 is_jumping = False
 health = 100
 score = 0
-invincible = False
-speed_boost = False
-power_up_timer = 0
 
 # Load Images and Sounds
 player_run = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png")
 player_jump = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png")
-coin_image = pygame.image.load("assets/coin.png")
-boss_image = pygame.image.load("assets/boss.png")
-power_up_image = pygame.image.load("assets/power_up.png")
-jump_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/jump-up-245782.mp3")
-hit_sound = pygame.mixer.Sound("assets/hit.wav")
-coin_sound = pygame.mixer.Sound("assets/coin.wav")
-power_up_sound = pygame.mixer.Sound("assets/power_up.wav")
+coin_image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin.png")
+boss_image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Michael Jeffrey Jordan.png")
+power_up_image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/crown.png")
 bg_music = "/Users/lucascarino/PycharmProjects/More list/Platformer game/background_music.mp3"
+jump_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/jump-up-245782.mp3")
+coin_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin-257878.mp3")
+hit_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/hit.mp3")
+
 
 # Background Music
 pygame.mixer.music.load(bg_music)
 pygame.mixer.music.play(-1)
 
-# Power-Up Types
+# Power-Ups
 POWER_UPS = ["speed_boost", "invincibility", "health_restore"]
 
 # Parallax Variables
 bg_x = 0
 bg_scroll_speed = 2
 
-# Coin Class
+# Levels
+current_level = 1
+level_data = {
+    1: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 5, "boss": False},
+    2: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 7, "boss": False},
+    3: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 10, "boss": True},
+}
+
+# Classes
 class Coin(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.transform.scale(coin_image, (30, 30))
         self.rect = self.image.get_rect(topleft=(x, y))
 
-# PowerUp Class
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self, x, y, power_type):
         super().__init__()
@@ -79,7 +82,6 @@ class PowerUp(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.type = power_type
 
-# BossEnemy Class with Attack Patterns
 class BossEnemy(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
         super().__init__()
@@ -87,132 +89,153 @@ class BossEnemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = 100
         self.speed = 3
-        self.attack_timer = 0
-        self.is_charging = False
 
     def update(self):
-        if self.is_charging:
-            self.rect.x -= self.speed * 2
-        else:
-            self.rect.x -= self.speed
-
+        self.rect.x -= self.speed
         if self.rect.x < 0 or self.rect.x > WIDTH - self.rect.width:
             self.speed *= -1
 
-        # Randomize attack pattern
-        self.attack_timer += 1
-        if self.attack_timer > 200:
-            self.attack_pattern()
-            self.attack_timer = 0
-
-    def attack_pattern(self):
-        # Choose a random attack
-        attack_choice = random.choice(["charge", "shoot"])
-        if attack_choice == "charge":
-            self.is_charging = True
-        else:
-            self.is_charging = False
-
-# Health Bar
+# Game Logic Functions
 def draw_health_bar():
-    pygame.draw.rect(Window, red, (20, 20, 200, 20))
-    pygame.draw.rect(Window, green, (20, 20, 2 * health, 20))
+    pygame.draw.rect(window, RED, (20, 20, 200, 20))
+    pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20))
 
-# Score Display
 def draw_score():
-    score_text = smallfont.render(f"Score: {score}", True, black)
-    Window.blit(score_text, (WIDTH - 150, 20))
+    score_text = smallfont.render(f"Score: {score}", True, BLACK)
+    window.blit(score_text, (WIDTH - 150, 20))
 
-# Draw Player with Animation
-def draw_player(frame):
-    if invincible:
-        player_color = purple
-    elif speed_boost:
-        player_color = blue
-    else:
-        player_color = green
-
+def draw_player():
     if is_jumping:
-        Window.blit(player_jump, (player_x, player_y))
+        window.blit(player_jump, (player_x, player_y))
     else:
-        Window.blit(player_run[frame // 5], (player_x, player_y))
+        window.blit(player_run, (player_x, player_y))
 
-# Parallax Scrolling
 def draw_background():
     global bg_x
-    Window.fill(white)
-    Window.blit(background_img, (bg_x, 0))
-    Window.blit(background_img, (bg_x + WIDTH, 0))
+    background_img = pygame.image.load(level_data[current_level]["bg"])
+    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
+    window.fill(WHITE)
+    window.blit(background_img, (bg_x, 0))
+    window.blit(background_img, (bg_x + WIDTH, 0))
     bg_x -= bg_scroll_speed
     if bg_x <= -WIDTH:
         bg_x = 0
 
-# Power-Up Effects
-def activate_power_up(power_type):
-    global invincible, speed_boost, health, power_up_timer
-    if power_type == "speed_boost":
-        speed_boost = True
-        power_up_timer = 300
-        power_up_sound.play()
-    elif power_type == "invincibility":
-        invincible = True
-        power_up_timer = 300
-        power_up_sound.play()
-    elif power_type == "health_restore":
-        health = min(health + 30, 100)
-        power_up_sound.play()
+def handle_movement():
+    global player_x, player_y, player_velocity_y, is_jumping, score
+    keys = pygame.key.get_pressed()
 
-# Main Game Loop
-def game_loop():
-    frame = 0
-    global health, score, invincible, speed_boost, power_up_timer
-    coins = [Coin(random.randint(100, 700), random.randint(100, 500)) for _ in range(10)]
-    power_ups = [PowerUp(random.randint(100, 700), random.randint(100, 500), random.choice(POWER_UPS)) for _ in range(5)]
-    boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150)
+    if keys[pygame.K_LEFT]:
+        player_x -= player_velocity
+    if keys[pygame.K_RIGHT]:
+        player_x += player_velocity
 
+    if keys[pygame.K_SPACE] and not is_jumping:
+        player_velocity_y = player_jump_velocity
+        is_jumping = True
+        jump_sound.play()
+
+    player_velocity_y += gravity
+    player_y += player_velocity_y
+
+    if player_y >= HEIGHT - player_height - 100:
+        player_y = HEIGHT - player_height - 100
+        player_velocity_y = 0
+        is_jumping = False
+
+def main_menu():
     while True:
-        draw_background()
-        draw_player(frame)
-        draw_health_bar()
-        draw_score()
+        window.fill(WHITE)
+        title_text = largefont.render("Platformer Game", True, BLUE)
+        window.blit(title_text, (WIDTH // 3, HEIGHT // 4))
 
-        # Update and draw coins
-        for coin in coins:
-            Window.blit(coin.image, coin.rect)
+        start_text = medfont.render("Press Enter to Start", True, BLACK)
+        window.blit(start_text, (WIDTH // 3, HEIGHT // 2))
 
-        # Update and draw power-ups
-        for power_up in power_ups:
-            Window.blit(power_up.image, power_up.rect)
-            if power_up.rect.colliderect((player_x, player_y, player_width, player_height)):
-                activate_power_up(power_up.type)
-                power_ups.remove(power_up)
+        exit_text = medfont.render("Press Esc to Exit", True, BLACK)
+        window.blit(exit_text, (WIDTH // 3, HEIGHT // 1.5))
 
-        # Boss fight logic
-        boss.update()
-        Window.blit(boss.image, boss.rect)
-
-        if invincible:
-            boss.is_charging = False
-
-        if power_up_timer > 0:
-            power_up_timer -= 1
-        else:
-            invincible = False
-            speed_boost = False
-
-        handle_movement()
+        pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        frame += 1
-        if frame >= 20:
-            frame = 0
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+
+def level_select():
+    global current_level
+    while True:
+        window.fill(WHITE)
+        level_text = largefont.render("Select Level", True, BLUE)
+        window.blit(level_text, (WIDTH // 3, HEIGHT // 4))
+
+        for i in range(1, 4):
+            level_button = medfont.render(f"Level {i}", True, BLACK)
+            window.blit(level_button, (WIDTH // 3, HEIGHT // 3 + (i - 1) * 50))
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    current_level = 1
+                    return
+                if event.key == pygame.K_2:
+                    current_level = 2
+                    return
+                if event.key == pygame.K_3:
+                    current_level = 3
+                    return
+
+def game_loop():
+    global health, score, is_jumping, current_level
+
+    coins = [Coin(random.randint(100, 700), random.randint(100, 500)) for _ in range(level_data[current_level]["enemy_count"])]
+    power_ups = [PowerUp(random.randint(100, 700), random.randint(100, 500), random.choice(POWER_UPS)) for _ in range(3)]
+    boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
+
+    while True:
+        draw_background()
+        draw_player()
+        draw_health_bar()
+        draw_score()
+
+        handle_movement()
+
+        for coin in coins:
+            window.blit(coin.image, coin.rect)
+
+        for power_up in power_ups:
+            window.blit(power_up.image, power_up.rect)
+
+        if boss:
+            boss.update()
+            window.blit(boss.image, boss.rect)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
 
         pygame.display.update()
         clock.tick(60)
 
-# Start the Game
-game_loop()
+def main():
+    while True:
+        main_menu()
+        level_select()
+        game_loop()
+
+if __name__ == "__main__":
+    main()
