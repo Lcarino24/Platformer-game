@@ -4,6 +4,7 @@ import random
 
 # Initialize pygame
 pygame.init()
+
 #Ur dumb
 # Screen Setup
 WIDTH, HEIGHT = 800, 600
@@ -87,6 +88,7 @@ class Coin(pygame.sprite.Sprite):
         super().__init__()
         self.image = pygame.transform.scale(coin_image, (30, 30))
         self.rect = self.image.get_rect(topleft=(x, y))
+
 
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self, x, y, power_type):
@@ -218,6 +220,41 @@ def level_select():
                     current_level = 3
                     return
 
+
+def game_over():
+    global health, score  # Access global health and score variables
+
+    while True:
+        window.fill(WHITE)
+
+        # Render "Game Over" text
+        game_over_text = largefont.render("Game Over", True, RED)
+        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
+
+        # Render the score
+        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
+        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
+
+        # Render restart and exit options
+        restart_text = smallfont.render("Press Enter--> Start screen", True, BLACK)
+        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1.5))
+
+
+        pygame.display.update()
+
+        # Check for user input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:  # Restart the game
+                    health = 100  # Reset health
+                    score = 0  # Reset score
+                    main()  # Call main() to restart the game
+                    return
+
 def game_loop():
     global health, score, is_jumping, current_level
 
@@ -226,6 +263,14 @@ def game_loop():
     power_ups = [PowerUp(random.randint(100, 700), random.randint(100, 500), random.choice(POWER_UPS)) for _ in range(3)]
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _ in range(level_data[current_level]["enemy_count"])]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
+
+    # Sprite groups for easy collision detection
+    all_sprites = pygame.sprite.Group()
+    all_sprites.add(coins)
+    all_sprites.add(power_ups)
+    all_sprites.add(enemies)
+    if boss:
+        all_sprites.add(boss)
 
     while True:
         draw_background()
@@ -238,6 +283,15 @@ def game_loop():
         # Draw and update coins
         for coin in coins:
             window.blit(coin.image, coin.rect)
+
+        # Check for collisions with coins
+        for coin in coins[:]:
+            if player_x < coin.rect.right and player_x + player_width > coin.rect.left and \
+               player_y < coin.rect.bottom and player_y + player_height > coin.rect.top:
+                # Coin collision detected
+                coins.remove(coin)  # Remove the coin from the list
+                score += 1  # Increase the score
+                coin_sound.play()  # Play coin sound
 
         # Draw and update power-ups
         for power_up in power_ups:
@@ -259,6 +313,11 @@ def game_loop():
             boss.update()
             window.blit(boss.image, boss.rect)
 
+        # Check if the player's health reaches zero
+        if health <= 0:
+            game_over()
+            return  # Stop the game loop and return to the main menu or exit
+
         # Check for game exit
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -268,6 +327,7 @@ def game_loop():
         pygame.display.update()
         clock.tick(60)
 
+
 def main():
     while True:
         main_menu()
@@ -276,3 +336,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
