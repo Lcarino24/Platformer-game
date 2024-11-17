@@ -5,7 +5,6 @@ import random
 # Initialize pygame
 pygame.init()
 
-#Ur dumb
 # Screen Setup
 WIDTH, HEIGHT = 800, 600
 window = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -89,13 +88,13 @@ class Coin(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(coin_image, (30, 30))
         self.rect = self.image.get_rect(topleft=(x, y))
 
-
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self, x, y, power_type):
         super().__init__()
         self.image = pygame.transform.scale(power_up_image, (40, 40))
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.type = power_type
+        self.type = power_type  # Power type (e.g., speed_boost, invincibility, health_restore)
+
 
 class BossEnemy(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height):
@@ -143,27 +142,39 @@ def draw_background():
     if bg_x <= -WIDTH:
         bg_x = 0
 
+
 def handle_movement():
     global player_x, player_y, player_velocity_y, is_jumping, score
+
     keys = pygame.key.get_pressed()
 
+    # Horizontal movement
     if keys[pygame.K_LEFT]:
         player_x -= player_velocity
+        if player_x < 0:  # Prevent the player from moving off the left side of the screen
+            player_x = 0
+
     if keys[pygame.K_RIGHT]:
         player_x += player_velocity
+        if player_x > WIDTH - player_width:  # Prevent the player from moving off the right side of the screen
+            player_x = WIDTH - player_width
 
+    # Vertical movement (jumping and gravity)
     if keys[pygame.K_SPACE] and not is_jumping:
         player_velocity_y = player_jump_velocity
         is_jumping = True
         jump_sound.play()
 
+    # Apply gravity
     player_velocity_y += gravity
     player_y += player_velocity_y
 
+    # Prevent the player from falling through the ground
     if player_y >= HEIGHT - player_height - 100:
         player_y = HEIGHT - player_height - 100
         player_velocity_y = 0
         is_jumping = False
+
 
 def main_menu():
     while True:
@@ -220,43 +231,16 @@ def level_select():
                     current_level = 3
                     return
 
-
-def game_over():
-    global health, score  # Access global health and score variables
-
-    while True:
-        window.fill(WHITE)
-
-        # Render "Game Over" text
-        game_over_text = largefont.render("Game Over", True, RED)
-        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
-
-        # Render the score
-        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
-
-        # Render restart and exit options
-        restart_text = smallfont.render("Press Enter--> Start screen", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1.5))
-
-
-        pygame.display.update()
-
-        # Check for user input
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Restart the game
-                    health = 100  # Reset health
-                    score = 0  # Reset score
-                    main()  # Call main() to restart the game
-                    return
+import time  # Import the time module for handling timing
 
 def game_loop():
-    global health, score, is_jumping, current_level
+    global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y
+
+    # Store initial player position and other variables to reset later
+    initial_player_x = 100
+    initial_player_y = HEIGHT - player_height - 100
+    initial_health = 100
+    initial_score = 0
 
     # Create coins, power-ups, and enemies
     coins = [Coin(random.randint(100, 700), random.randint(100, 500)) for _ in range(level_data[current_level]["enemy_count"])]
@@ -264,13 +248,11 @@ def game_loop():
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _ in range(level_data[current_level]["enemy_count"])]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
 
-    # Sprite groups for easy collision detection
-    all_sprites = pygame.sprite.Group()
-    all_sprites.add(coins)
-    all_sprites.add(power_ups)
-    all_sprites.add(enemies)
-    if boss:
-        all_sprites.add(boss)
+    # Power-up effect display text
+    power_up_message = ""
+    active_power_up = None
+    power_up_start_time = None  # Store the start time of the power-up effect
+    power_up_duration = 5  # Duration of the power-up effect (in seconds)
 
     while True:
         draw_background()
@@ -297,6 +279,27 @@ def game_loop():
         for power_up in power_ups:
             window.blit(power_up.image, power_up.rect)
 
+            # Check for collisions with power-ups
+            if player_x < power_up.rect.right and player_x + player_width > power_up.rect.left and \
+               player_y < power_up.rect.bottom and player_y + player_height > power_up.rect.top:
+                # Power-up collision detected
+                power_up_effect = power_up.type  # Get the type of power-up
+                power_ups.remove(power_up)  # Remove the power-up from the list
+
+                # Assign the random power-up effect
+                active_power_up = power_up_effect
+                power_up_message = f"You got {active_power_up}!"
+                power_up_start_time = time.time()  # Capture the start time of the power-up
+
+                # Apply the effect
+                if active_power_up == "speed_boost":
+                    player_velocity = 10  # Increase speed
+                elif active_power_up == "invincibility":
+                    health = min(health + 50, 100)  # Restore health (as an example)
+                elif active_power_up == "health_restore":
+                    health = 100  # Restore full health
+                coin_sound.play()  # Play the power-up sound
+
         # Draw and update enemies
         for enemy in enemies:
             enemy.update()
@@ -305,17 +308,40 @@ def game_loop():
             # Check collision with the player
             if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
                player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
-                health -= 1
-                hit_sound.play()
+                # If the player has the invincibility power-up, they don't take damage
+                if active_power_up != "invincibility":
+                    health -= 1
+                    hit_sound.play()
 
         # Draw and update boss if present
         if boss:
             boss.update()
             window.blit(boss.image, boss.rect)
 
+        # Display the power-up message
+        if active_power_up:
+            power_up_text = smallfont.render(power_up_message, True, YELLOW)
+            window.blit(power_up_text, (WIDTH // 3, HEIGHT // 3))  # Display in the center of the screen
+
+        # Check if the power-up duration has expired
+        if power_up_start_time and time.time() - power_up_start_time > power_up_duration:
+            # Reset the power-up effect after the duration
+            if active_power_up == "speed_boost":
+                player_velocity = 5  # Revert to normal speed
+            elif active_power_up == "invincibility":
+                # Invincibility effect ends (we can leave this as is for now, or apply additional logic)
+                pass
+            elif active_power_up == "health_restore":
+                # No need to reset health as it was fully restored
+                pass
+
+            # Reset the power-up
+            active_power_up = None
+            power_up_message = ""  # Clear the message
+
         # Check if the player's health reaches zero
         if health <= 0:
-            game_over()
+            game_over(initial_player_x, initial_player_y, initial_health, initial_score)
             return  # Stop the game loop and return to the main menu or exit
 
         # Check for game exit
@@ -326,6 +352,34 @@ def game_loop():
 
         pygame.display.update()
         clock.tick(60)
+def game_over(start_x, start_y, start_health, start_score):
+    global player_x, player_y, health, score
+    player_x, player_y = start_x, start_y  # Reset player position
+    health = start_health  # Reset health
+    while True:
+        window.fill(WHITE)
+        game_over_text = largefont.render("Game Over", True, RED)
+        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
+        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
+        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
+        restart_text = smallfont.render("Press Enter--> Start screen", True, BLACK)
+        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1.5))
+
+
+        pygame.display.update()
+
+        # Check for user input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:  # Restart the game
+                    health = 100  # Reset health
+                    score = 0  # Reset score
+                    main()  # Call main() to restart the game
+                    return
 
 
 def main():
