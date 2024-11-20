@@ -219,59 +219,51 @@ def main_menu():
             mousey = int(mousepos[1])
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
+                    level_select()
                     return
             if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
                 pygame.quit()
                 sys.exit()
 
-
 def game_over(start_x, start_y, start_health, start_score):
-    global player_x, player_y, health, score
-    player_x, player_y = start_x, start_y  # Reset player position
-    health = start_health  # Reset health
+    global health, score
     while True:
         window.fill(WHITE)
         game_over_text = largefont.render("Game Over", True, RED)
         window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
         score_text = medfont.render(f"Final Score: {score}", True, BLACK)
         window.blit(score_text, (WIDTH // 3.2, HEIGHT // 2))
-        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
-        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
-        pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
+        window.blit(restart_text, (WIDTH // 3.2, HEIGHT // 1.5))
         pygame.display.update()
 
-        # Check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
-            mousepos = pygame.mouse.get_pos()
-            mousex = int(mousepos[0])
-            mousey = int(mousepos[1])
-
-            if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
-                level_select()
-
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    level_select()
+                    return
 
 # Global variable for high score
 high_scores = {1: None, 2: None, 3: None}  # High scores for levels
 import time
 
-
 def game_loop():
     global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y, high_scores
+
+    # Reset player state for the new level
+    health = 100
+    score = 0
+    is_jumping = False
+    player_x, player_y = 100, HEIGHT - player_height - 100  # Reset position
+    player_velocity_y = 0
 
     # Initialize start time
     start_time = pygame.time.get_ticks()
 
-    # Store initial player position and other variables to reset later
-    initial_player_x = 100
-    initial_player_y = HEIGHT - player_height - 100
-    initial_health = 100
-    initial_score = 0
-
-    # Create coins, power-ups, and enemies
+    # Create coins, power-ups, and enemies for the current level
     coins = [Coin(random.randint(100, 700), random.randint(320, 500)) for _ in
              range(level_data[current_level]["enemy_count"])]
     power_ups = [PowerUp(random.randint(100, 700), random.randint(320, 500), random.choice(POWER_UPS)) for _ in
@@ -280,6 +272,7 @@ def game_loop():
                in range(level_data[current_level]["enemy_count"])]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
 
+    # Reset power-up variables
     power_up_message = ""
     active_power_up = None
     power_up_start_time = None
@@ -331,9 +324,10 @@ def game_loop():
         if not coins and not power_ups:
             elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Convert milliseconds to seconds
             update_high_score(elapsed_time)
-            won_level(initial_player_x, initial_player_y, initial_health, initial_score, elapsed_time)
+            won_level(player_x, player_y, health, score, elapsed_time)
             return
 
+        # Handle enemies and collisions
         for enemy in enemies:
             enemy.update()
             window.blit(enemy.image, enemy.rect)
@@ -348,6 +342,7 @@ def game_loop():
             boss.update()
             window.blit(boss.image, boss.rect)
 
+        # Handle power-up timer expiration
         if active_power_up:
             power_up_text = smallfont.render(power_up_message, True, YELLOW)
             window.blit(power_up_text, (WIDTH // 3, HEIGHT // 3))
@@ -359,7 +354,7 @@ def game_loop():
             power_up_message = ""
 
         if health <= 0:
-            game_over(initial_player_x, initial_player_y, initial_health, initial_score)
+            game_over(100, HEIGHT - player_height - 100, 100, 0)
             return
 
         for event in pygame.event.get():
@@ -406,43 +401,30 @@ def update_high_score(elapsed_time):
         high_scores[current_level] = elapsed_time
         save_high_scores()  # Save the updated high scores to the file
 
-
 def won_level(start_x, start_y, start_health, start_score, elapsed_time):
-    global player_x, player_y, health, score
-    player_x, player_y = start_x, start_y  # Reset player position
-    health = start_health  # Reset health
+    global health, score
     while True:
         window.fill(WHITE)
-        game_over_text = largefont.render("You Won!", True, RED)
-        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
+        win_text = largefont.render("You Won!", True, GREEN)
+        window.blit(win_text, (WIDTH // 3, HEIGHT // 4))
         score_text = medfont.render(f"Final Score: {score}", True, BLACK)
         window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
-        score_text = medfont.render(f"Time: {elapsed_time}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3, HEIGHT // 1.5))
-        restart_text = smallfont.render("Press Enter--> Level Screen", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1))
-        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
-        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
-        pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
-
+        time_text = medfont.render(f"Time: {elapsed_time:.2f}s", True, BLACK)
+        window.blit(time_text, (WIDTH // 3, HEIGHT // 1.5))
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
+        window.blit(restart_text, (WIDTH // 3.2, HEIGHT // 1.2))
         pygame.display.update()
 
-        # Check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            mousepos = pygame.mouse.get_pos()
-            mousex = int(mousepos[0])
-            mousey = int(mousepos[1])
-
-            if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
-                level_select()
-
-
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    level_select()
+                    return  # Exit the function to return to the caller
 def level_select():
-    global current_level
-    print("Loaded high scores:", high_scores)  # Debugging print
+    global current_level, health, score, player_x, player_y, player_velocity_y
     while True:
         window.fill(WHITE)
         level_text = largefont.render("Select Level", True, BLUE)
@@ -450,7 +432,6 @@ def level_select():
         pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
-
         for i in range(1, 4):
             level_button = medfont.render(f"Level {i}", True, BLACK)
             high_score_text = smallfont.render(
@@ -472,16 +453,37 @@ def level_select():
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
+                    health = 100
+                    score = 0
+                    player_x = 100
+                    player_y = HEIGHT - player_height - 100
+                    player_velocity_y = 0
                     current_level = 1
+                    game_loop()
                     return
-                if event.key == pygame.K_2:
+                elif event.key == pygame.K_2:
+                    health = 100
+                    score = 0
+                    player_x = 100
+                    player_y = HEIGHT - player_height - 100
+                    player_velocity_y = 0
                     current_level = 2
+                    game_loop()
                     return
-                if event.key == pygame.K_3:
+                elif event.key == pygame.K_3:
+                    health = 100
+                    score = 0
+                    player_x = 100
+                    player_y = HEIGHT - player_height - 100
+                    player_velocity_y = 0
                     current_level = 3
-                    return
+                    game_loop()
+                    return 
             if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
                 main_menu()
+                return
+
+
 
 
 def main():
