@@ -76,9 +76,9 @@ bg_scroll_speed = 2
 # Levels
 current_level = 1
 level_data = {
-    1: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 5, "boss": False},
-    2: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 7, "boss": False},
-    3: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 10, "boss": True},
+    1: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 3, "boss": False},
+    2: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 4, "boss": False},
+    3: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 5, "boss": True},
 }
 
 # Classes
@@ -179,7 +179,7 @@ def handle_movement():
 def main_menu():
     while True:
         window.fill(WHITE)
-        title_text = largefont.render("Platformer Game", True, BLUE)
+        title_text = largefont.render("Super Lebron", True, BLUE)
         window.blit(title_text, (WIDTH // 3, HEIGHT // 4))
 
         start_text = medfont.render("Press Enter to Start", True, BLACK)
@@ -201,40 +201,44 @@ def main_menu():
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
-
-def level_select():
-    global current_level
+def game_over(start_x, start_y, start_health, start_score):
+    global player_x, player_y, health, score
+    player_x, player_y = start_x, start_y  # Reset player position
+    health = start_health  # Reset health
     while True:
         window.fill(WHITE)
-        level_text = largefont.render("Select Level", True, BLUE)
-        window.blit(level_text, (WIDTH // 3, HEIGHT // 4))
-
-        for i in range(1, 4):
-            level_button = medfont.render(f"Level {i}", True, BLACK)
-            window.blit(level_button, (WIDTH // 3, HEIGHT // 3 + (i - 1) * 50))
+        game_over_text = largefont.render("Game Over", True, RED)
+        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
+        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
+        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
+        restart_text = smallfont.render("Press Enter--> Start screen", True, BLACK)
+        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1.5))
 
         pygame.display.update()
 
+        # Check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    current_level = 1
-                    return
-                if event.key == pygame.K_2:
-                    current_level = 2
-                    return
-                if event.key == pygame.K_3:
-                    current_level = 3
+                if event.key == pygame.K_RETURN:  # Restart the game
+                    health = 100  # Reset health
+                    score = 0  # Reset score
+                    level_select()
                     return
 
-import time  # Import the time module for handling timing
 
+
+# Global variable for high score
+high_scores = {1: None, 2: None, 3: None}  # High scores for levels
+import time
 def game_loop():
-    global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y
+    global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y, high_scores
+
+    # Initialize start time
+    start_time = pygame.time.get_ticks()
 
     # Store initial player position and other variables to reset later
     initial_player_x = 100
@@ -243,16 +247,15 @@ def game_loop():
     initial_score = 0
 
     # Create coins, power-ups, and enemies
-    coins = [Coin(random.randint(100, 700), random.randint(100, 500)) for _ in range(level_data[current_level]["enemy_count"])]
-    power_ups = [PowerUp(random.randint(100, 700), random.randint(100, 500), random.choice(POWER_UPS)) for _ in range(3)]
+    coins = [Coin(random.randint(100, 700), random.randint(320, 500)) for _ in range(level_data[current_level]["enemy_count"])]
+    power_ups = [PowerUp(random.randint(100, 700), random.randint(320, 500), random.choice(POWER_UPS)) for _ in range(3)]
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _ in range(level_data[current_level]["enemy_count"])]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
 
-    # Power-up effect display text
     power_up_message = ""
     active_power_up = None
-    power_up_start_time = None  # Store the start time of the power-up effect
-    power_up_duration = 5  # Duration of the power-up effect (in seconds)
+    power_up_start_time = None
+    power_up_duration = 5
 
     while True:
         draw_background()
@@ -270,10 +273,9 @@ def game_loop():
         for coin in coins[:]:
             if player_x < coin.rect.right and player_x + player_width > coin.rect.left and \
                player_y < coin.rect.bottom and player_y + player_height > coin.rect.top:
-                # Coin collision detected
-                coins.remove(coin)  # Remove the coin from the list
-                score += 1  # Increase the score
-                coin_sound.play()  # Play coin sound
+                coins.remove(coin)
+                score += 1
+                coin_sound.play()
 
         # Draw and update power-ups
         for power_up in power_ups:
@@ -282,69 +284,55 @@ def game_loop():
             # Check for collisions with power-ups
             if player_x < power_up.rect.right and player_x + player_width > power_up.rect.left and \
                player_y < power_up.rect.bottom and player_y + player_height > power_up.rect.top:
-                # Power-up collision detected
-                power_up_effect = power_up.type  # Get the type of power-up
-                power_ups.remove(power_up)  # Remove the power-up from the list
+                power_up_effect = power_up.type
+                power_ups.remove(power_up)
 
-                # Assign the random power-up effect
                 active_power_up = power_up_effect
                 power_up_message = f"You got {active_power_up}!"
-                power_up_start_time = time.time()  # Capture the start time of the power-up
+                power_up_start_time = time.time()
 
-                # Apply the effect
                 if active_power_up == "speed_boost":
-                    player_velocity = 10  # Increase speed
+                    player_velocity = 20
                 elif active_power_up == "invincibility":
-                    health = min(health + 50, 100)  # Restore health (as an example)
+                    health = min(health + 50, 100)
                 elif active_power_up == "health_restore":
-                    health = 100  # Restore full health
-                coin_sound.play()  # Play the power-up sound
+                    health = 100
+                coin_sound.play()
 
-        # Draw and update enemies
+        # Check if all coins and power-ups are collected
+        if not coins and not power_ups:
+            elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Convert milliseconds to seconds
+            update_high_score(elapsed_time)
+            return  # End the game loop and return to the main menu or next level
+
         for enemy in enemies:
             enemy.update()
             window.blit(enemy.image, enemy.rect)
 
-            # Check collision with the player
             if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
                player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
-                # If the player has the invincibility power-up, they don't take damage
                 if active_power_up != "invincibility":
-                    health -= 1
+                    health -= 1.5
                     hit_sound.play()
 
-        # Draw and update boss if present
         if boss:
             boss.update()
             window.blit(boss.image, boss.rect)
 
-        # Display the power-up message
         if active_power_up:
             power_up_text = smallfont.render(power_up_message, True, YELLOW)
-            window.blit(power_up_text, (WIDTH // 3, HEIGHT // 3))  # Display in the center of the screen
+            window.blit(power_up_text, (WIDTH // 3, HEIGHT // 3))
 
-        # Check if the power-up duration has expired
         if power_up_start_time and time.time() - power_up_start_time > power_up_duration:
-            # Reset the power-up effect after the duration
             if active_power_up == "speed_boost":
-                player_velocity = 5  # Revert to normal speed
-            elif active_power_up == "invincibility":
-                # Invincibility effect ends (we can leave this as is for now, or apply additional logic)
-                pass
-            elif active_power_up == "health_restore":
-                # No need to reset health as it was fully restored
-                pass
-
-            # Reset the power-up
+                player_velocity = 5
             active_power_up = None
-            power_up_message = ""  # Clear the message
+            power_up_message = ""
 
-        # Check if the player's health reaches zero
         if health <= 0:
             game_over(initial_player_x, initial_player_y, initial_health, initial_score)
-            return  # Stop the game loop and return to the main menu or exit
+            return
 
-        # Check for game exit
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -352,41 +340,90 @@ def game_loop():
 
         pygame.display.update()
         clock.tick(60)
-def game_over(start_x, start_y, start_health, start_score):
-    global player_x, player_y, health, score
-    player_x, player_y = start_x, start_y  # Reset player position
-    health = start_health  # Reset health
+
+import json
+
+# File to store high scores
+HIGH_SCORE_FILE = "high_scores.json"
+
+def load_high_scores():
+    global high_scores
+    try:
+        with open(HIGH_SCORE_FILE, 'r') as file:
+            high_scores = json.load(file)
+            # Ensure all levels have keys in the high_scores dictionary
+            high_scores = {int(k): v for k, v in high_scores.items()}  # Convert keys to integers
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Initialize default high scores if file is missing or corrupted
+        high_scores = {1: None, 2: None, 3: None}
+
+    # Ensure all levels are present
+    for level in range(1, 4):
+        if level not in high_scores:
+            high_scores[level] = None
+
+
+def save_high_scores():
+    with open(HIGH_SCORE_FILE, 'w') as file:
+        json.dump(high_scores, file)
+
+def update_high_score(elapsed_time):
+    global high_scores, current_level
+
+    if high_scores[current_level] is None or elapsed_time < high_scores[current_level]:
+        high_scores[current_level] = elapsed_time
+        save_high_scores()  # Save the updated high scores to the file
+def level_select():
+    global current_level
+    print("Loaded high scores:", high_scores)  # Debugging print
     while True:
         window.fill(WHITE)
-        game_over_text = largefont.render("Game Over", True, RED)
-        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
-        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
-        restart_text = smallfont.render("Press Enter--> Start screen", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1.5))
+        level_text = largefont.render("Select Level", True, BLUE)
+        window.blit(level_text, (WIDTH // 3, HEIGHT // 4))
+        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
+        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
+        pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
 
+        for i in range(1, 4):
+            level_button = medfont.render(f"Level {i}", True, BLACK)
+            high_score_text = smallfont.render(
+                f"Best Time: {high_scores[i]:.2f}s" if high_scores[i] else "No Record",
+                True, GREEN
+            )
+            window.blit(level_button, (WIDTH // 3, HEIGHT // 3 + (i - 1) * 50))
+            window.blit(high_score_text, (WIDTH // 3 + 150, HEIGHT // 3 + (i - 1) * 50))
 
         pygame.display.update()
 
-        # Check for user input
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            mousepos = pygame.mouse.get_pos()
+            mousex = int(mousepos[0])
+            mousey = int(mousepos[1])
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Restart the game
-                    health = 100  # Reset health
-                    score = 0  # Reset score
-                    main()  # Call main() to restart the game
+                if event.key == pygame.K_1:
+                    current_level = 1
                     return
+                if event.key == pygame.K_2:
+                    current_level = 2
+                    return
+                if event.key == pygame.K_3:
+                    current_level = 3
+                    return
+            if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
+                main_menu()
 
 
 def main():
+    load_high_scores()  # Load saved high scores
     while True:
         main_menu()
         level_select()
         game_loop()
+
 
 if __name__ == "__main__":
     main()
