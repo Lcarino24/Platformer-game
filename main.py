@@ -36,6 +36,8 @@ player_velocity_y = 0
 is_jumping = False
 health = 100
 score = 0
+
+
 def scale_image(image, max_width, max_height):
     original_width, original_height = image.get_size()
     aspect_ratio = original_width / original_height
@@ -50,17 +52,25 @@ def scale_image(image, max_width, max_height):
 
     return pygame.transform.scale(image, (new_width, new_height))
 
+
 # Load Images and Sounds
-player_run = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"), player_width, player_height)
-player_jump = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"), player_width, player_height)
-coin_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin.png"), 30, 30)
-boss_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Michael Jeffrey Jordan.png"), 150, 150)
-power_up_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/crown.png"), 40, 40)
+player_run = scale_image(
+    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"),
+    player_width, player_height)
+player_jump = scale_image(
+    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"),
+    player_width, player_height)
+coin_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin.png"), 30,
+                         30)
+boss_image = scale_image(
+    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Michael Jeffrey Jordan.png"), 150,
+    150)
+power_up_image = scale_image(
+    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/crown.png"), 40, 40)
 bg_music = "/Users/lucascarino/PycharmProjects/More list/Platformer game/background_music.mp3"
 jump_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/jump-up-245782.mp3")
 coin_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin-257878.mp3")
 hit_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/hit.mp3")
-
 
 # Background Music
 pygame.mixer.music.load(bg_music)
@@ -76,10 +86,14 @@ bg_scroll_speed = 2
 # Levels
 current_level = 1
 level_data = {
-    1: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 3, "boss": False},
-    2: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 4, "boss": False},
-    3: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 5, "boss": True},
+    1: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 3,
+        "boss": False},
+    2: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 4,
+        "boss": False},
+    3: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 5,
+        "boss": True},
 }
+
 
 # Classes
 class Coin(pygame.sprite.Sprite):
@@ -87,6 +101,7 @@ class Coin(pygame.sprite.Sprite):
         super().__init__()
         self.image = pygame.transform.scale(coin_image, (30, 30))
         self.rect = self.image.get_rect(topleft=(x, y))
+
 
 class PowerUp(pygame.sprite.Sprite):
     def __init__(self, x, y, power_type):
@@ -103,6 +118,8 @@ class BossEnemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.health = 100
         self.speed = 3
+
+
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, speed):
         super().__init__()
@@ -123,15 +140,18 @@ def draw_health_bar():
     pygame.draw.rect(window, RED, (20, 20, 200, 20))
     pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20))
 
+
 def draw_score():
     score_text = smallfont.render(f"Score: {score}", True, BLACK)
     window.blit(score_text, (WIDTH - 150, 20))
+
 
 def draw_player():
     if is_jumping:
         window.blit(player_jump, (player_x, player_y))
     else:
         window.blit(player_run, (player_x, player_y))
+
 
 def draw_background():
     global bg_x
@@ -180,13 +200,13 @@ def main_menu():
     while True:
         window.fill(WHITE)
         title_text = largefont.render("Super Lebron", True, BLUE)
-        window.blit(title_text, (WIDTH // 3, HEIGHT // 4))
+        window.blit(title_text, (WIDTH // 3.5, HEIGHT // 4))
 
         start_text = medfont.render("Press Enter to Start", True, BLACK)
-        window.blit(start_text, (WIDTH // 3, HEIGHT // 2))
-
-        exit_text = medfont.render("Press Esc to Exit", True, BLACK)
-        window.blit(exit_text, (WIDTH // 3, HEIGHT // 1.5))
+        window.blit(start_text, (WIDTH // 3.5, HEIGHT // 2))
+        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
+        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
+        pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
 
         pygame.display.update()
 
@@ -194,13 +214,17 @@ def main_menu():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-
+            mousepos = pygame.mouse.get_pos()
+            mousex = int(mousepos[0])
+            mousey = int(mousepos[1])
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     return
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
+            if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.quit()
+                sys.exit()
+
+
 def game_over(start_x, start_y, start_health, start_score):
     global player_x, player_y, health, score
     player_x, player_y = start_x, start_y  # Reset player position
@@ -208,12 +232,12 @@ def game_over(start_x, start_y, start_health, start_score):
     while True:
         window.fill(WHITE)
         game_over_text = largefont.render("Game Over", True, RED)
-        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
+        window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
         score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
-        restart_text = smallfont.render("Press Enter--> Start screen", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1.5))
-
+        window.blit(score_text, (WIDTH // 3.2, HEIGHT // 2))
+        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
+        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
+        pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
         pygame.display.update()
 
         # Check for user input
@@ -222,18 +246,19 @@ def game_over(start_x, start_y, start_health, start_score):
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Restart the game
-                    health = 100  # Reset health
-                    score = 0  # Reset score
-                    level_select()
-                    return
+            mousepos = pygame.mouse.get_pos()
+            mousex = int(mousepos[0])
+            mousey = int(mousepos[1])
 
+            if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
+                level_select()
 
 
 # Global variable for high score
 high_scores = {1: None, 2: None, 3: None}  # High scores for levels
 import time
+
+
 def game_loop():
     global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y, high_scores
 
@@ -247,9 +272,12 @@ def game_loop():
     initial_score = 0
 
     # Create coins, power-ups, and enemies
-    coins = [Coin(random.randint(100, 700), random.randint(320, 500)) for _ in range(level_data[current_level]["enemy_count"])]
-    power_ups = [PowerUp(random.randint(100, 700), random.randint(320, 500), random.choice(POWER_UPS)) for _ in range(3)]
-    enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _ in range(level_data[current_level]["enemy_count"])]
+    coins = [Coin(random.randint(100, 700), random.randint(320, 500)) for _ in
+             range(level_data[current_level]["enemy_count"])]
+    power_ups = [PowerUp(random.randint(100, 700), random.randint(320, 500), random.choice(POWER_UPS)) for _ in
+                 range(3)]
+    enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _
+               in range(level_data[current_level]["enemy_count"])]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
 
     power_up_message = ""
@@ -272,7 +300,7 @@ def game_loop():
         # Check for collisions with coins
         for coin in coins[:]:
             if player_x < coin.rect.right and player_x + player_width > coin.rect.left and \
-               player_y < coin.rect.bottom and player_y + player_height > coin.rect.top:
+                    player_y < coin.rect.bottom and player_y + player_height > coin.rect.top:
                 coins.remove(coin)
                 score += 1
                 coin_sound.play()
@@ -283,7 +311,7 @@ def game_loop():
 
             # Check for collisions with power-ups
             if player_x < power_up.rect.right and player_x + player_width > power_up.rect.left and \
-               player_y < power_up.rect.bottom and player_y + player_height > power_up.rect.top:
+                    player_y < power_up.rect.bottom and player_y + player_height > power_up.rect.top:
                 power_up_effect = power_up.type
                 power_ups.remove(power_up)
 
@@ -303,14 +331,15 @@ def game_loop():
         if not coins and not power_ups:
             elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Convert milliseconds to seconds
             update_high_score(elapsed_time)
-            return  # End the game loop and return to the main menu or next level
+            won_level(initial_player_x, initial_player_y, initial_health, initial_score, elapsed_time)
+            return
 
         for enemy in enemies:
             enemy.update()
             window.blit(enemy.image, enemy.rect)
 
             if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
-               player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
+                    player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
                 if active_power_up != "invincibility":
                     health -= 1.5
                     hit_sound.play()
@@ -341,10 +370,12 @@ def game_loop():
         pygame.display.update()
         clock.tick(60)
 
+
 import json
 
 # File to store high scores
 HIGH_SCORE_FILE = "high_scores.json"
+
 
 def load_high_scores():
     global high_scores
@@ -367,12 +398,48 @@ def save_high_scores():
     with open(HIGH_SCORE_FILE, 'w') as file:
         json.dump(high_scores, file)
 
+
 def update_high_score(elapsed_time):
     global high_scores, current_level
 
     if high_scores[current_level] is None or elapsed_time < high_scores[current_level]:
         high_scores[current_level] = elapsed_time
         save_high_scores()  # Save the updated high scores to the file
+
+
+def won_level(start_x, start_y, start_health, start_score, elapsed_time):
+    global player_x, player_y, health, score
+    player_x, player_y = start_x, start_y  # Reset player position
+    health = start_health  # Reset health
+    while True:
+        window.fill(WHITE)
+        game_over_text = largefont.render("You Won!", True, RED)
+        window.blit(game_over_text, (WIDTH // 3, HEIGHT // 4))
+        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
+        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
+        score_text = medfont.render(f"Time: {elapsed_time}", True, BLACK)
+        window.blit(score_text, (WIDTH // 3, HEIGHT // 1.5))
+        restart_text = smallfont.render("Press Enter--> Level Screen", True, BLACK)
+        window.blit(restart_text, (WIDTH // 3, HEIGHT // 1))
+        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
+        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
+        pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
+
+        pygame.display.update()
+
+        # Check for user input
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            mousepos = pygame.mouse.get_pos()
+            mousex = int(mousepos[0])
+            mousey = int(mousepos[1])
+
+            if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
+                level_select()
+
+
 def level_select():
     global current_level
     print("Loaded high scores:", high_scores)  # Debugging print
@@ -427,4 +494,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
