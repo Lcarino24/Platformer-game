@@ -119,7 +119,6 @@ class BossEnemy(pygame.sprite.Sprite):
         self.health = 100
         self.speed = 3
 
-
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, speed):
         super().__init__()
@@ -127,12 +126,34 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = speed
+        self.gravity = 0.8
+        self.vertical_velocity = 0
+        self.is_jumping = False
+        self.jump_timer = random.randint(100, 200)  # Timer for random jumps
 
     def update(self):
+        # Horizontal movement
         self.rect.x += self.speed
-        # Reverse direction when hitting the screen boundaries
         if self.rect.right >= WIDTH or self.rect.left <= 0:
-            self.speed *= -1
+            self.speed *= -1  # Reverse direction
+
+        # Random jumping logic
+        if current_level in [2, 3]:  # Enable jumping in levels 2 and 3
+            self.jump_timer -= 1
+            if self.jump_timer <= 0 and not self.is_jumping:
+                self.vertical_velocity = -10  # Set jump velocity
+                self.is_jumping = True
+                self.jump_timer = random.randint(100, 200)  # Reset timer
+
+            # Apply gravity
+            self.vertical_velocity += self.gravity
+            self.rect.y += self.vertical_velocity
+
+            # Check if the enemy lands on the ground
+            if self.rect.bottom >= HEIGHT - 100:
+                self.rect.bottom = HEIGHT - 100
+                self.vertical_velocity = 0
+                self.is_jumping = False
 
 
 # Game Logic Functions
@@ -478,7 +499,7 @@ def level_select():
                     player_velocity_y = 0
                     current_level = 3
                     game_loop()
-                    return 
+                    return
             if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
                 main_menu()
                 return
