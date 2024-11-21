@@ -284,9 +284,9 @@ def game_loop():
     start_time = pygame.time.get_ticks()
 
     # Create coins, power-ups, and enemies for the current level
-    coins = [Coin(random.randint(100, 700), random.randint(320, 500)) for _ in
+    coins = [Coin(random.randint(100, 700), random.randint(340, 490)) for _ in
              range(level_data[current_level]["enemy_count"])]
-    power_ups = [PowerUp(random.randint(100, 700), random.randint(320, 500), random.choice(POWER_UPS)) for _ in
+    power_ups = [PowerUp(random.randint(100, 700), random.randint(340, 490), random.choice(POWER_UPS)) for _ in
                  range(3)]
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _
                in range(level_data[current_level]["enemy_count"])]
