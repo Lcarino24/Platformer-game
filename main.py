@@ -1,13 +1,13 @@
-import pygame
-import sys
-import random
+import pygame #imports pygame module for specific functions that allow smooth game operation
+import sys #sys module provides access to functions and variables that are used, maintained, or interact with the interpreter
+import random #module that helps generate random numbers
 
 # Initialize pygame
 pygame.init()
 
 # Screen Setup
-WIDTH, HEIGHT = 800, 600
-window = pygame.display.set_mode((WIDTH, HEIGHT))
+WIDTH, HEIGHT = 800, 600 #dual assignemnt of dimensions for the game
+window = pygame.display.set_mode((WIDTH, HEIGHT)) #assigns display window to window variable
 pygame.display.set_caption('Platformer Game')
 
 # Colors
@@ -27,84 +27,84 @@ clock = pygame.time.Clock()
 # Player Setup
 player_width = 50
 player_height = 50
-player_x = 100
-player_y = HEIGHT - player_height - 100
+player_x = 100 #initial x position of character
+player_y = HEIGHT - player_height - 100 #initial y position of character
 player_velocity = 5
-player_jump_velocity = -12
-gravity = 0.8
-player_velocity_y = 0
-is_jumping = False
-health = 100
-score = 0
+player_jump_velocity = -12 #negative value because y-axis points downwards
+gravity = 0.8 #force pulling down on player
+player_velocity_y = 0 #initial variable that indicates player y velocity when not jumping
+is_jumping = False #inital boolean value assigned to whether player is jumping or not
+health = 100 #initializion of health
+score = 0 #initializtion of score
 
 
-def scale_image(image, max_width, max_height):
+def scale_image(image, max_width, max_height): #This function scales an image such that it fits in the parameters given in the function while preserving the aspect ratio
     original_width, original_height = image.get_size()
     aspect_ratio = original_width / original_height
 
     # Determine new width and height while maintaining aspect ratio
-    if max_width / max_height > aspect_ratio:
+    if max_width / max_height > aspect_ratio: #if the image is smaller width-wise, it is resized according to the max height while preserving the aspect ratio
         new_width = int(max_height * aspect_ratio)
         new_height = max_height
-    else:
+    else: # if else, the image is greater width wise and thus is adjusted according to the max width while preserving the aspect ratio.
         new_width = max_width
         new_height = int(max_width / aspect_ratio)
 
-    return pygame.transform.scale(image, (new_width, new_height))
+    return pygame.transform.scale(image, (new_width, new_height)) # returns the resized image as a pygame surface object
 
 
-# Load Images and Sounds
+# Load Images and Sounds. Uses the previously defined function to resize images for specific instances and assign them to variables
 player_run = scale_image(
-    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"),
+    pygame.image.load("LebronRaymoneJames.png"),
     player_width, player_height)
 player_jump = scale_image(
-    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/LebronRaymoneJames.png"),
+    pygame.image.load("LebronRaymoneJames.png"),
     player_width, player_height)
-coin_image = scale_image(pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin.png"), 30,
+coin_image = scale_image(pygame.image.load("coin.png"), 30,
                          30)
 boss_image = scale_image(
-    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Michael Jeffrey Jordan.png"), 150,
+    pygame.image.load("Michael Jeffrey Jordan.png"), 150,
     150)
 power_up_image = scale_image(
-    pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/crown.png"), 40, 40)
-bg_music = "/Users/lucascarino/PycharmProjects/More list/Platformer game/background_music.mp3"
-jump_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/jump-up-245782.mp3")
-coin_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/coin-257878.mp3")
-hit_sound = pygame.mixer.Sound("/Users/lucascarino/PycharmProjects/More list/Platformer game/hit.mp3")
+    pygame.image.load("crown.png"), 40, 40)
+bg_music = "background_music.mp3"
+jump_sound = pygame.mixer.Sound("jump-up-245782.mp3")
+coin_sound = pygame.mixer.Sound("coin-257878.mp3")
+hit_sound = pygame.mixer.Sound("hit.mp3")
 
 # Background Music
 pygame.mixer.music.load(bg_music)
-pygame.mixer.music.play(-1)
+pygame.mixer.music.play(-1) #plays music on repeat
 
 # Power-Ups
-POWER_UPS = ["speed_boost", "invincibility", "health_restore"]
+POWER_UPS = ["speed_boost", "invincibility", "health_restore"] #list of indexable power ups
 
 # Parallax Variables
-bg_x = 0
-bg_scroll_speed = 2
+bg_x = 0 #initial position of the background image
+bg_scroll_speed = 2 # variable assigned to the scroll speed of the background
 
 # Levels
 current_level = 1
 level_data = {
-    1: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 3,
+    1: {"bg": "background.jpeg", "enemy_count": 3,
         "boss": False},
-    2: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 4,
+    2: {"bg": "background.jpeg", "enemy_count": 4,
         "boss": False},
-    3: {"bg": "/Users/lucascarino/PycharmProjects/More list/Platformer game/background.jpeg", "enemy_count": 5,
+    3: {"bg": "background.jpeg", "enemy_count": 5,
         "boss": True},
-}
+} # indexable dictionary in a dictionary that contains level information for each specfied level
 
 
 # Classes
 class Coin(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y): # initializes the x and y positions of the coins in levels
         super().__init__()
-        self.image = pygame.transform.scale(coin_image, (30, 30))
-        self.rect = self.image.get_rect(topleft=(x, y))
+        self.image = pygame.transform.scale(coin_image, (30, 30)) #loads the coins image and resizes it
+        self.rect = self.image.get_rect(topleft=(x, y)) # defines rectangular body for positioning and collision detection as well as places the top left corner of the image at (x,y)
 
 
 class PowerUp(pygame.sprite.Sprite):
-    def __init__(self, x, y, power_type):
+    def __init__(self, x, y, power_type): # initializes the x and y positions of the power up as well as includes an additional argument for power-up type
         super().__init__()
         self.image = pygame.transform.scale(power_up_image, (40, 40))
         self.rect = self.image.get_rect(topleft=(x, y))
@@ -116,13 +116,13 @@ class BossEnemy(pygame.sprite.Sprite):
         super().__init__()
         self.image = pygame.transform.scale(boss_image, (width, height))
         self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = 100
-        self.speed = 3
+        self.health = 100 # initializes the bosses health
+        self.speed = 3 # initializes the bosses speed
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, speed):
+    def __init__(self, x, y, width, height, speed): # initializes the position, dimensions, and speed of the enemy
         super().__init__()
-        self.image = pygame.image.load("/Users/lucascarino/PycharmProjects/More list/Platformer game/Steph Curry.png")
+        self.image = pygame.image.load("Steph Curry.png")
         self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = speed
