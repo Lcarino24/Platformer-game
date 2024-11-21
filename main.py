@@ -94,7 +94,6 @@ level_data = {
         "boss": True},
 }
 
-
 # Classes
 class Coin(pygame.sprite.Sprite):
     def __init__(self, x, y):
