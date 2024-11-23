@@ -110,13 +110,13 @@ class PowerUp(pygame.sprite.Sprite):
         self.type = power_type  # Power type (e.g., speed_boost, invincibility, health_restore)
 
 
-class BossEnemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height):
+class BossEnemy(pygame.sprite.Sprite): # defines boss characteristics
+    def __init__(self, x, y, width, height): # initializes variables for boss
         super().__init__()
-        self.image = pygame.transform.scale(boss_image, (width, height))
-        self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = 100 # initializes the bosses health
-        self.speed = 3 # initializes the bosses speed
+        self.image = pygame.transform.scale(boss_image, (width, height)) # scales image
+        self.rect = self.image.get_rect(topleft=(x, y)) # makes image rectangle
+        #self.health = 100 # initializes the bosses health
+        #self.speed = 3 # initializes the bosses speed
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, speed): # initializes the position, dimensions, and speed of the enemy
@@ -374,7 +374,7 @@ def game_loop():
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _
                in range(level_data[current_level]["enemy_count"])]
     enemiesplatform = [PlatformEnemy(random.randint(280, 530), HEIGHT - player_height - 200, 50, 50, random.choice([-3, 3])) for _ in range(2)]
-    boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
+    boss = BossEnemy(WIDTH / 2 - 75, 10, 150, 150) if level_data[current_level]["boss"] else None
 
     # Reset power-up variables
     power_up_message = ""
