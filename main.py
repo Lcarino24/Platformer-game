@@ -95,7 +95,7 @@ level_data = {
 } # indexable dictionary in a dictionary that contains level information for each specfied level
 
 # Classes
-class Coin(pygame.sprite.Sprite):
+class Coin(pygame.sprite.Sprite): #inherits characteristics from sprite
     def __init__(self, x, y): # initializes the x and y positions of the coins in levels
         super().__init__()
         self.image = pygame.transform.scale(coin_image, (30, 30)) #loads the coins image and resizes it
@@ -125,12 +125,12 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = speed
-        self.gravity = 0.8
-        self.vertical_velocity = 0
+        self.gravity = 0.8 # set gravity
+        self.vertical_velocity = 0 # initial vertical velocity subject to change with later functions
         self.is_jumping = False
         self.jump_timer = random.randint(100, 200)  # Timer for random jumps
 
-    def update(self):
+    def update(self): # updates
         # Horizontal movement
         self.rect.x += self.speed
         if self.rect.right >= WIDTH or self.rect.left <= 0:
@@ -162,7 +162,7 @@ def draw_health_bar():
 
 
 def draw_score():
-    score_text = smallfont.render(f"Score: {score}", True, BLACK)
+    score_text = smallfont.render(f"Score: {score}", True, WHITE)
     window.blit(score_text, (WIDTH - 150, 20))
 
 
@@ -186,7 +186,6 @@ def draw_background_main():
     background_img1 = pygame.image.load("bball_bg.jpg")
     background_img1 = pygame.transform.scale(background_img1, (WIDTH, HEIGHT))
     window.blit(background_img1, (0,0))
-
 
 def handle_movement():
     global player_x, player_y, player_velocity_y, is_jumping, score
@@ -258,18 +257,18 @@ def main_menu():
 def game_over(start_x, start_y, start_health, start_score):
     global health, score
     while True:
-        window.fill(WHITE)
+        draw_background()
         game_over_text = largefont.render("Game Over", True, RED)
         game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
         window.blit(game_over_text, game_over_rect)
         #window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
 
-        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        score_text = medfont.render(f"Final Score: {score}", True, WHITE)
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2.5))
         window.blit(score_text, score_rect)
 
-        restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
-        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 4 * 3))
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE)
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.7))
         window.blit(restart_text, restart_rect)
         pygame.display.update()
 
@@ -345,7 +344,7 @@ def game_loop():
                 power_ups.remove(power_up)
 
                 active_power_up = power_up_effect
-                power_up_message = f"You got {active_power_up}!"
+                power_up_message = f"You got {active_power_up.replace('_', ' ')}!"
                 power_up_start_time = time.time()
 
                 if active_power_up == "speed_boost":
@@ -441,21 +440,22 @@ def update_high_score(elapsed_time):
 def won_level(start_x, start_y, start_health, start_score, elapsed_time):
     global health, score
     while True:
-        window.fill(WHITE)
+        draw_background()
         win_text = largefont.render("You Won!", True, GREEN)
         win_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT// 4))
         window.blit(win_text, win_rect)
 
-        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        score_text = medfont.render(f"Final Score: {score}", True, WHITE)
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2.5))
         window.blit(score_text, score_rect)
 
-        time_text = medfont.render(f"Time: {elapsed_time:.2f}s", True, BLACK)
-        time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.5))
+        time_text = medfont.render(f"Time: {elapsed_time:.2f}s", True, WHITE)
+        time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
         window.blit(time_text, time_rect)
 
-        restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
-        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.2))
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE)
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.7))
+        window.blit(restart_text, restart_rect)
         pygame.display.update()
 
         for event in pygame.event.get():
@@ -469,20 +469,21 @@ def won_level(start_x, start_y, start_health, start_score, elapsed_time):
 def level_select():
     global current_level, health, score, player_x, player_y, player_velocity_y
     while True:
-        window.fill(WHITE)
-        level_text = largefont.render("Select Level", True, BLUE)
-        window.blit(level_text, (WIDTH // 3, HEIGHT // 4))
+        draw_background_main()
+        level_text = largefont.render("Select Level", True, WHITE)
+        level_rect = level_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+        window.blit(level_text, level_rect)
         pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
         for i in range(1, 4):
-            level_button = medfont.render(f"Level {i}", True, BLACK)
+            level_button = medfont.render(f"Level {i}:", True, WHITE)
             high_score_text = smallfont.render(
                 f"Best Time: {high_scores[i]:.2f}s" if high_scores[i] else "No Record",
                 True, GREEN
             )
-            window.blit(level_button, (WIDTH // 3, HEIGHT // 3 + (i - 1) * 50))
-            window.blit(high_score_text, (WIDTH // 3 + 150, HEIGHT // 3 + (i - 1) * 50))
+            window.blit(level_button, (WIDTH // 4.5, HEIGHT // 3.5 + (i - 1) * 75 + 20))
+            window.blit(high_score_text, (WIDTH // 4.5 + 200, HEIGHT // 4 + (i - 1) * 75 + 55))
 
         pygame.display.update()
 
