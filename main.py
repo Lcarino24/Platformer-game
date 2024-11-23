@@ -130,54 +130,54 @@ class Enemy(pygame.sprite.Sprite):
         self.is_jumping = False
         self.jump_timer = random.randint(100, 200)  # Timer for random jumps
 
-    def update(self): # updates
+    def update(self): # updates behaviour of enemy sprites
         # Horizontal movement
-        self.rect.x += self.speed
+        self.rect.x += self.speed # moves the enemy's rectangle with its speed
         if self.rect.right >= WIDTH or self.rect.left <= 0:
-            self.speed *= -1  # Reverse direction
+            self.speed *= -1  # Reverse direction when enemy reaches boundary
 
         # Random jumping logic
         if current_level in [2, 3]:  # Enable jumping in levels 2 and 3
-            self.jump_timer -= 1
+            self.jump_timer -= 1 # counts down every frame
             if self.jump_timer <= 0 and not self.is_jumping:
                 self.vertical_velocity = -10  # Set jump velocity
-                self.is_jumping = True
+                self.is_jumping = True # when timer reaches 0 and is not jumping, make enemy jump
                 self.jump_timer = random.randint(100, 200)  # Reset timer
 
             # Apply gravity
-            self.vertical_velocity += self.gravity
-            self.rect.y += self.vertical_velocity
+            self.vertical_velocity += self.gravity # applies gravity to enemy
+            self.rect.y += self.vertical_velocity # changes the rectangle of the enemy with vertical motion
 
             # Check if the enemy lands on the ground
-            if self.rect.bottom >= HEIGHT - 100:
-                self.rect.bottom = HEIGHT - 100
-                self.vertical_velocity = 0
-                self.is_jumping = False
+            if self.rect.bottom >= HEIGHT - 100: # if enemy is a certain distance from bottom, keep them there
+                self.rect.bottom = HEIGHT - 100 # set the new bottom position of rectangle
+                self.vertical_velocity = 0 # resets vertical velocity to zero
+                self.is_jumping = False # resets boolean value
 
 
 # Game Logic Functions
 def draw_health_bar():
-    pygame.draw.rect(window, RED, (20, 20, 200, 20))
-    pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20))
+    pygame.draw.rect(window, RED, (20, 20, 200, 20)) # places red rectangle
+    pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20)) # overlays green rectangle, subject to change with later functions
 
 
 def draw_score():
     score_text = smallfont.render(f"Score: {score}", True, WHITE)
-    window.blit(score_text, (WIDTH - 150, 20))
+    window.blit(score_text, (WIDTH - 150, 20)) # places score text in top right corner of screen
 
 
 def draw_player():
     if is_jumping:
-        window.blit(player_jump, (player_x, player_y))
+        window.blit(player_jump, (player_x, player_y)) # if player is jumping, the jumping sprite is displayed at position (x,y)
     else:
-        window.blit(player_run, (player_x, player_y))
+        window.blit(player_run, (player_x, player_y)) # if player is running, the running sprite is displayed at position (x,y)
 
 
 def draw_background():
     global bg_x
-    background_img = pygame.image.load(level_data[current_level]["bg"])
-    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
-    window.blit(background_img, (0, 0))
+    background_img = pygame.image.load(level_data[current_level]["bg"]) # loads background image by indexing the level data and selecting specific background
+    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT)) # scales background to appropriate dimensions
+    window.blit(background_img, (0, 0)) # places image on the window such that it fits the whole screen
     bg_x -= bg_scroll_speed
     if bg_x <= -WIDTH:
         bg_x = 0
