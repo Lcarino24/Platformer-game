@@ -153,6 +153,42 @@ class Enemy(pygame.sprite.Sprite):
                 self.rect.bottom = HEIGHT - 100 # set the new bottom position of rectangle
                 self.vertical_velocity = 0 # resets vertical velocity to zero
                 self.is_jumping = False # resets boolean value
+
+class PlatformEnemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, speed):  # initializes the position, dimensions, and speed of the enemy
+        super().__init__()
+        self.image = pygame.image.load("Steph Curry.png")
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.speed = speed
+        self.gravity = 0.8  # set gravity
+        self.vertical_velocity = 0  # initial vertical velocity subject to change with later functions
+        self.is_jumping = True
+        self.jump_timer = random.randint(100, 200)  # Timer for random jumps
+
+    def updatePlatformEnemy(self):
+        self.rect.x += self.speed
+        if self.rect.right >= 550 or self.rect.left <= 280:
+            self.speed *= -1
+
+        if current_level == 3:
+            self.jump_timer -= 1 # counts down every frame
+            if self.jump_timer <= 0 and not self.is_jumping:
+                self.vertical_velocity = -10  # Set jump velocity
+                self.is_jumping = True # when timer reaches 0 and is not jumping, make enemy jump
+                self.jump_timer = random.randint(100, 200)  # Reset timer
+
+            # Apply gravity
+            self.vertical_velocity += self.gravity # applies gravity to enemy
+            self.rect.y += self.vertical_velocity # changes the rectangle of the enemy with vertical motion
+
+            # Check if the enemy lands on the ground
+            if self.rect.bottom >= HEIGHT - player_height - 200: # if enemy is a certain distance from bottom, keep them there
+                self.rect.bottom = HEIGHT - player_height - 200 # set the new bottom position of rectangle
+                self.vertical_velocity = 0 # resets vertical velocity to zero
+                self.is_jumping = False # resets boolean value
+
+
 #producing objects
 class Object(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, name=None):
@@ -324,7 +360,7 @@ def game_loop():
     block_x, block_y = 272, 16
     block_width, block_height = 47, 4
     gold_bar = get_block(terrain_sheet, block_x, block_y, block_width, block_height)
-    blocks1 = [Block(0 + i * block_width, HEIGHT - 100, gold_bar) for i in range( WIDTH // block_width +1)]
+    blocks1 = [Block(0 + i * block_width, HEIGHT - 100, gold_bar) for i in range( WIDTH // block_width + 1)]
     blocks2 = [Block(WIDTH / 4 - block_width / 2 + WIDTH / 2 * i, HEIGHT - player_height - 120, gold_bar) for i in range(2)]
 
     # Initialize start time
@@ -337,6 +373,7 @@ def game_loop():
                  range(3)]
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _
                in range(level_data[current_level]["enemy_count"])]
+    enemiesplatform = [PlatformEnemy(random.randint(280, 530), HEIGHT - player_height - 200, 50, 50, random.choice([-3, 3])) for _ in range(2)]
     boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
 
     # Reset power-up variables
@@ -385,6 +422,28 @@ def game_loop():
                         player_velocity_y = 0
                         is_jumping = False
                         break
+        if current_level == 3:
+            blocks4 = [Block(WIDTH / 3 + block_width * i, HEIGHT - player_height - 200, gold_bar) for i in range( WIDTH // 3 // block_width + 1)]
+            for block in blocks4:
+                block.draw(window)
+            for m in blocks4:
+                if player_rect.colliderect(m.rect):
+                    if player_velocity_y > 0:
+                        player_y = m.rect.top - player_height
+                        player_velocity_y = 0
+                        is_jumping = False
+                        break
+            for enemy in enemiesplatform:
+                enemy.updatePlatformEnemy()
+                window.blit(enemy.image, enemy.rect)
+
+                if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
+                        player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
+                    if active_power_up != "invincibility":
+                        health -= 1.5
+                        hit_sound.play()
+
+
 
 
         handle_movement()
@@ -440,6 +499,7 @@ def game_loop():
                 if active_power_up != "invincibility":
                     health -= 1.5
                     hit_sound.play()
+
 
         if boss:
             boss.update()
