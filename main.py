@@ -153,9 +153,43 @@ class Enemy(pygame.sprite.Sprite):
                 self.rect.bottom = HEIGHT - 100 # set the new bottom position of rectangle
                 self.vertical_velocity = 0 # resets vertical velocity to zero
                 self.is_jumping = False # resets boolean value
+#producing objects
+class Object(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, name=None):
+        super().__init__()
+        self.rect = pygame.Rect(x, y, width, height)
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.width = width
+        self.height = height
+        self.name = name
+    def draw(self, win):
+        win.blit(self.image, (self.rect.x), self.rect.y)
 
+class Block(Object):
+    #def __init__(self, x, y, size1, size2):
+        #super().__init__(x, y, size1, size2)
+        #block = get_block(size1, size2)
+        #self.image.blit(block, (0.0))
+        #self.mask = pygame.mask.from_surface(self.image)
+    def __init__(self, x, y, image):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.rect = self.image.get_rect(topleft=(x,y))
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.x, self.y))
 
 # Game Logic Functions
+#def get_block(size1, size2): # extract a block from sprite sheet with correct size and position and resize and reposition it
+    #image = pygame.image.load("Terrain.png").convert_alpha()
+    #surface = pygame.Surface((size1, size2), pygame.SRCALPHA, 32)
+    #rect = pygame.Rect(272, 16, size1, size2) #(47, 4)
+    #surface.blit(image, (0,0), rect)
+    #return pygame.transform.scale2x(surface)
+def get_block(image, x, y, width, height):
+    return image.subsurface(pygame.Rect(x, y, width, height))
+
 def draw_health_bar():
     pygame.draw.rect(window, RED, (20, 20, 200, 20)) # places red rectangle
     pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20)) # overlays green rectangle, subject to change with later functions
@@ -295,6 +329,13 @@ def game_loop():
     player_x, player_y = 100, HEIGHT - player_height - 100  # Reset position
     player_velocity_y = 0
 
+    #initializing blocks
+    terrain_sheet = pygame.image.load("Terrain.png").convert_alpha()
+    block_x, block_y = 272, 16
+    block_width, block_height = 47, 4
+    gold_bar = get_block(terrain_sheet, block_x, block_y, block_width, block_height)
+    #block = Block(0, HEIGHT-100, gold_bar)
+
     # Initialize start time
     start_time = pygame.time.get_ticks()
 
@@ -318,6 +359,10 @@ def game_loop():
         draw_player()
         draw_health_bar()
         draw_score()
+
+        for i in range(WIDTH // block_width + 1):
+            block = Block(0 + i * block_width, HEIGHT - 100, gold_bar)
+            block.draw(window)
 
         handle_movement()
 
