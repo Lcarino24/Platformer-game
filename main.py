@@ -19,9 +19,9 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 215, 0)
 
 # Fonts
-smallfont = pygame.font.SysFont('Arial', 25)
-medfont = pygame.font.SysFont('Arial', 40)
-largefont = pygame.font.SysFont('Arial', 60)
+smallfont = pygame.font.SysFont('gillsansultra', 25)
+medfont = pygame.font.SysFont('gillsansultra', 40)
+largefont = pygame.font.SysFont('gillsansultra', 60)
 clock = pygame.time.Clock()
 
 # Player Setup
@@ -182,6 +182,11 @@ def draw_background():
     if bg_x <= -WIDTH:
         bg_x = 0
 
+def draw_background_main():
+    background_img1 = pygame.image.load("bball_bg.jpg")
+    background_img1 = pygame.transform.scale(background_img1, (WIDTH, HEIGHT))
+    window.blit(background_img1, (0,0))
+
 
 def handle_movement():
     global player_x, player_y, player_velocity_y, is_jumping, score
@@ -189,18 +194,18 @@ def handle_movement():
     keys = pygame.key.get_pressed()
 
     # Horizontal movement
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         player_x -= player_velocity
         if player_x < 0:  # Prevent the player from moving off the left side of the screen
             player_x = 0
 
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         player_x += player_velocity
         if player_x > WIDTH - player_width:  # Prevent the player from moving off the right side of the screen
             player_x = WIDTH - player_width
 
     # Vertical movement (jumping and gravity)
-    if keys[pygame.K_SPACE] and not is_jumping:
+    if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and not is_jumping:
         player_velocity_y = player_jump_velocity
         is_jumping = True
         jump_sound.play()
@@ -218,12 +223,17 @@ def handle_movement():
 
 def main_menu():
     while True:
-        window.fill(WHITE)
-        title_text = largefont.render("Super Lebron", True, BLUE)
-        window.blit(title_text, (WIDTH // 3.5, HEIGHT // 4))
+        #window.fill(WHITE)
+        draw_background_main()
+        #background, bg_image = get_background("bball_bg.jpg")
+        title_text = largefont.render("Super Lebron", True, WHITE)
+        title_rect = title_text.get_rect(center=(WIDTH//2, HEIGHT//4))
+        window.blit(title_text, title_rect)
 
-        start_text = medfont.render("Press Enter to Start", True, BLACK)
-        window.blit(start_text, (WIDTH // 3.5, HEIGHT // 2))
+        start_text = medfont.render("Press Enter to Start", True, WHITE)
+        start_rect = start_text.get_rect(center=(WIDTH// 2, HEIGHT// 2 ))
+        window.blit(start_text, start_rect)
+
         pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
@@ -250,11 +260,17 @@ def game_over(start_x, start_y, start_health, start_score):
     while True:
         window.fill(WHITE)
         game_over_text = largefont.render("Game Over", True, RED)
-        window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
+        game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+        window.blit(game_over_text, game_over_rect)
+        #window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
+
         score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3.2, HEIGHT // 2))
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        window.blit(score_text, score_rect)
+
         restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3.2, HEIGHT // 1.5))
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 4 * 3))
+        window.blit(restart_text, restart_rect)
         pygame.display.update()
 
         for event in pygame.event.get():
@@ -365,7 +381,8 @@ def game_loop():
         # Handle power-up timer expiration
         if active_power_up:
             power_up_text = smallfont.render(power_up_message, True, YELLOW)
-            window.blit(power_up_text, (WIDTH // 3, HEIGHT // 3))
+            power_up_rect = power_up_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
+            window.blit(power_up_text, power_up_rect)
 
         if power_up_start_time and time.time() - power_up_start_time > power_up_duration:
             if active_power_up == "speed_boost":
@@ -426,13 +443,19 @@ def won_level(start_x, start_y, start_health, start_score, elapsed_time):
     while True:
         window.fill(WHITE)
         win_text = largefont.render("You Won!", True, GREEN)
-        window.blit(win_text, (WIDTH // 3, HEIGHT // 4))
+        win_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT// 4))
+        window.blit(win_text, win_rect)
+
         score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        window.blit(score_text, score_rect)
+
         time_text = medfont.render(f"Time: {elapsed_time:.2f}s", True, BLACK)
-        window.blit(time_text, (WIDTH // 3, HEIGHT // 1.5))
+        time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.5))
+        window.blit(time_text, time_rect)
+
         restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3.2, HEIGHT // 1.2))
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.2))
         pygame.display.update()
 
         for event in pygame.event.get():
