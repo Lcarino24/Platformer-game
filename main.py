@@ -167,21 +167,16 @@ class Object(pygame.sprite.Sprite):
 
 class Block(Object):
     def __init__(self, x, y, image):
+        super().__init__(x, y, image.get_width(), image.get_height())
         self.x = x
         self.y = y
         self.image = image
         self.rect = self.image.get_rect(topleft=(x,y))
 
     def draw(self, screen):
-        screen.blit(self.image, (self.x, self.y))
+        screen.blit(self.image, (self.rect.x, self.rect.y))
 
 # Game Logic Functions
-#def get_block(size1, size2): # extract a block from sprite sheet with correct size and position and resize and reposition it
-    #image = pygame.image.load("Terrain.png").convert_alpha()
-    #surface = pygame.Surface((size1, size2), pygame.SRCALPHA, 32)
-    #rect = pygame.Rect(272, 16, size1, size2) #(47, 4)
-    #surface.blit(image, (0,0), rect)
-    #return pygame.transform.scale2x(surface)
 def get_block(image, x, y, width, height):
     return image.subsurface(pygame.Rect(x, y, width, height))
 
@@ -378,6 +373,19 @@ def game_loop():
                     player_velocity_y = 0
                     is_jumping = False
                     break
+
+        if current_level == 2:
+            blocks3 = [Block(WIDTH / 3 - block_width / 2 + WIDTH / 3 * i, HEIGHT - player_height - 200, gold_bar) for i in range(2)]
+            for block in blocks3:
+                block.draw(window)
+            for l in blocks3:
+                if player_rect.colliderect(l.rect):
+                    if player_velocity_y > 0:
+                        player_y = l.rect.top - player_height
+                        player_velocity_y = 0
+                        is_jumping = False
+                        break
+
 
         handle_movement()
 
