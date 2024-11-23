@@ -166,11 +166,6 @@ class Object(pygame.sprite.Sprite):
         win.blit(self.image, (self.rect.x), self.rect.y)
 
 class Block(Object):
-    #def __init__(self, x, y, size1, size2):
-        #super().__init__(x, y, size1, size2)
-        #block = get_block(size1, size2)
-        #self.image.blit(block, (0.0))
-        #self.mask = pygame.mask.from_surface(self.image)
     def __init__(self, x, y, image):
         self.x = x
         self.y = y
@@ -334,7 +329,8 @@ def game_loop():
     block_x, block_y = 272, 16
     block_width, block_height = 47, 4
     gold_bar = get_block(terrain_sheet, block_x, block_y, block_width, block_height)
-    #block = Block(0, HEIGHT-100, gold_bar)
+    blocks1 = [Block(0 + i * block_width, HEIGHT - 100, gold_bar) for i in range( WIDTH // block_width +1)]
+    blocks2 = [Block(WIDTH / 4 - block_width / 2 + WIDTH / 2 * i, HEIGHT - player_height - 120, gold_bar) for i in range(2)]
 
     # Initialize start time
     start_time = pygame.time.get_ticks()
@@ -360,9 +356,28 @@ def game_loop():
         draw_health_bar()
         draw_score()
 
-        for i in range(WIDTH // block_width + 1):
-            block = Block(0 + i * block_width, HEIGHT - 100, gold_bar)
+        for block in blocks1:
             block.draw(window)
+
+        for block in blocks2:
+            block.draw(window)
+
+        player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
+        for j in blocks1:
+            if player_rect.colliderect(j.rect):
+                if player_velocity_y > 0:
+                    player_y = j.rect.top - player_height
+                    player_velocity_y = 0
+                    is_jumping = False
+                    break
+
+        for k in blocks2:
+            if player_rect.colliderect(k.rect):
+                if player_velocity_y > 0:
+                    player_y = k.rect.top - player_height
+                    player_velocity_y = 0
+                    is_jumping = False
+                    break
 
         handle_movement()
 
