@@ -19,9 +19,9 @@ BLUE = (0, 0, 255)
 YELLOW = (255, 215, 0)
 
 # Fonts
-smallfont = pygame.font.SysFont('Arial', 25)
-medfont = pygame.font.SysFont('Arial', 40)
-largefont = pygame.font.SysFont('Arial', 60)
+smallfont = pygame.font.SysFont('gillsansultra', 25)
+medfont = pygame.font.SysFont('gillsansultra', 40)
+largefont = pygame.font.SysFont('gillsansultra', 60)
 clock = pygame.time.Clock()
 
 # Player Setup
@@ -86,16 +86,16 @@ bg_scroll_speed = 2 # variable assigned to the scroll speed of the background
 # Levels
 current_level = 1
 level_data = {
-    1: {"bg": "background.jpeg", "enemy_count": 3,
+    1: {"bg": "background.jpg", "enemy_count": 3,
         "boss": False},
-    2: {"bg": "background.jpeg", "enemy_count": 4,
+    2: {"bg": "background.jpg", "enemy_count": 4,
         "boss": False},
-    3: {"bg": "background.jpeg", "enemy_count": 5,
+    3: {"bg": "background.jpg", "enemy_count": 5,
         "boss": True},
 } # indexable dictionary in a dictionary that contains level information for each specfied level
 
 # Classes
-class Coin(pygame.sprite.Sprite):
+class Coin(pygame.sprite.Sprite): #inherits characteristics from sprite
     def __init__(self, x, y): # initializes the x and y positions of the coins in levels
         super().__init__()
         self.image = pygame.transform.scale(coin_image, (30, 30)) #loads the coins image and resizes it
@@ -110,13 +110,13 @@ class PowerUp(pygame.sprite.Sprite):
         self.type = power_type  # Power type (e.g., speed_boost, invincibility, health_restore)
 
 
-class BossEnemy(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height):
+class BossEnemy(pygame.sprite.Sprite): # defines boss characteristics
+    def __init__(self, x, y, width, height): # initializes variables for boss
         super().__init__()
-        self.image = pygame.transform.scale(boss_image, (width, height))
-        self.rect = self.image.get_rect(topleft=(x, y))
-        self.health = 100 # initializes the bosses health
-        self.speed = 3 # initializes the bosses speed
+        self.image = pygame.transform.scale(boss_image, (width, height)) # scales image
+        self.rect = self.image.get_rect(topleft=(x, y)) # makes image rectangle
+        #self.health = 100 # initializes the bosses health
+        #self.speed = 3 # initializes the bosses speed
 
 class Enemy(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, speed): # initializes the position, dimensions, and speed of the enemy
@@ -125,63 +125,143 @@ class Enemy(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = speed
-        self.gravity = 0.8
-        self.vertical_velocity = 0
+        self.gravity = 0.8 # set gravity
+        self.vertical_velocity = 0 # initial vertical velocity subject to change with later functions
         self.is_jumping = False
         self.jump_timer = random.randint(100, 200)  # Timer for random jumps
 
-    def update(self):
+    def update(self): # updates behaviour of enemy sprites
         # Horizontal movement
-        self.rect.x += self.speed
+        self.rect.x += self.speed # moves the enemy's rectangle with its speed
         if self.rect.right >= WIDTH or self.rect.left <= 0:
-            self.speed *= -1  # Reverse direction
+            self.speed *= -1  # Reverse direction when enemy reaches boundary
 
         # Random jumping logic
         if current_level in [2, 3]:  # Enable jumping in levels 2 and 3
-            self.jump_timer -= 1
+            self.jump_timer -= 1 # counts down every frame
             if self.jump_timer <= 0 and not self.is_jumping:
                 self.vertical_velocity = -10  # Set jump velocity
-                self.is_jumping = True
+                self.is_jumping = True # when timer reaches 0 and is not jumping, make enemy jump
                 self.jump_timer = random.randint(100, 200)  # Reset timer
 
             # Apply gravity
-            self.vertical_velocity += self.gravity
-            self.rect.y += self.vertical_velocity
+            self.vertical_velocity += self.gravity # applies gravity to enemy
+            self.rect.y += self.vertical_velocity # changes the rectangle of the enemy with vertical motion
 
             # Check if the enemy lands on the ground
-            if self.rect.bottom >= HEIGHT - 100:
-                self.rect.bottom = HEIGHT - 100
-                self.vertical_velocity = 0
-                self.is_jumping = False
+            if self.rect.bottom >= HEIGHT - 100: # if enemy is a certain distance from bottom, keep them there
+                self.rect.bottom = HEIGHT - 100 # set the new bottom position of rectangle
+                self.vertical_velocity = 0 # resets vertical velocity to zero
+                self.is_jumping = False # resets boolean value
+
+class PlatformEnemy(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, speed):  # initializes the position, dimensions, and speed of the enemy
+        super().__init__()
+        self.image = pygame.image.load("Steph Curry.png")
+        self.image = pygame.transform.scale(self.image, (width, height))
+        self.rect = self.image.get_rect(topleft=(x, y))
+        self.speed = speed
+        self.gravity = 0.8  # set gravity
+        self.vertical_velocity = 0  # initial vertical velocity subject to change with later functions
+        self.is_jumping = True
+        self.jump_timer = random.randint(100, 200)  # Timer for random jumps
+
+    def updatePlatformEnemy(self):
+        self.rect.x += self.speed
+        if self.rect.right >= 540 or self.rect.left <= 269:
+            self.speed *= -1
+
+        if current_level == 3:
+            self.jump_timer -= 1 # counts down every frame
+            if self.jump_timer <= 0 and not self.is_jumping:
+                self.vertical_velocity = -10  # Set jump velocity
+                self.is_jumping = True # when timer reaches 0 and is not jumping, make enemy jump
+                self.jump_timer = random.randint(100, 200)  # Reset timer
+
+            # Apply gravity
+            self.vertical_velocity += self.gravity # applies gravity to enemy
+            self.rect.y += self.vertical_velocity # changes the rectangle of the enemy with vertical motion
+
+            # Check if the enemy lands on the ground
+            if self.rect.bottom >= HEIGHT - player_height - 200: # if enemy is a certain distance from bottom, keep them there
+                self.rect.bottom = HEIGHT - player_height - 200 # set the new bottom position of rectangle
+                self.vertical_velocity = 0 # resets vertical velocity to zero
+                self.is_jumping = False # resets boolean value
+
+
+#producing objects
+class Object(pygame.sprite.Sprite):
+    def __init__(self, x, y, width, height, name=None):
+        super().__init__()
+        self.rect = pygame.Rect(x, y, width, height)
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
+        self.width = width
+        self.height = height
+        self.name = name
+    def draw(self, win):
+        win.blit(self.image, (self.rect.x), self.rect.y)
+
+class Block(Object):
+    def __init__(self, x, y, image):
+        super().__init__(x, y, image.get_width(), image.get_height())
+        self.x = x
+        self.y = y
+        self.image = image
+        self.rect = self.image.get_rect(topleft=(x,y))
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+class Basketball(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("basketball.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (15,15))
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.velocity_y = 0
+        self.gravity = 0.8
+        self.velocity_x = random.randint(-3,3)
+
+    def update(self):
+        self.velocity_y += self.gravity  # applies gravity to enemy
+        self.rect.y += self.velocity_y  # changes the rectangle of the enemy with vertical motion
+        self.rect.x += self.velocity_x
 
 
 # Game Logic Functions
+def get_block(image, x, y, width, height):
+    return image.subsurface(pygame.Rect(x, y, width, height))
+
 def draw_health_bar():
-    pygame.draw.rect(window, RED, (20, 20, 200, 20))
-    pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20))
+    pygame.draw.rect(window, RED, (20, 20, 200, 20)) # places red rectangle
+    pygame.draw.rect(window, GREEN, (20, 20, 2 * health, 20)) # overlays green rectangle, subject to change with later functions
 
 
 def draw_score():
-    score_text = smallfont.render(f"Score: {score}", True, BLACK)
-    window.blit(score_text, (WIDTH - 150, 20))
+    score_text = smallfont.render(f"Score: {score}", True, WHITE)
+    window.blit(score_text, (WIDTH - 150, 20)) # places score text in top right corner of screen
 
 
 def draw_player():
     if is_jumping:
-        window.blit(player_jump, (player_x, player_y))
+        window.blit(player_jump, (player_x, player_y)) # if player is jumping, the jumping sprite is displayed at position (x,y)
     else:
-        window.blit(player_run, (player_x, player_y))
+        window.blit(player_run, (player_x, player_y)) # if player is running, the running sprite is displayed at position (x,y)
 
 
 def draw_background():
     global bg_x
-    background_img = pygame.image.load(level_data[current_level]["bg"])
-    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT))
-    window.blit(background_img, (0, 0))
+    background_img = pygame.image.load(level_data[current_level]["bg"]) # loads background image by indexing the level data and selecting specific background
+    background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT)) # scales background to appropriate dimensions
+    window.blit(background_img, (0, 0)) # places image on the window such that it fits the whole screen
     bg_x -= bg_scroll_speed
     if bg_x <= -WIDTH:
         bg_x = 0
 
+def draw_background_main():
+    background_img1 = pygame.image.load("bball_bg.jpg")
+    background_img1 = pygame.transform.scale(background_img1, (WIDTH, HEIGHT))
+    window.blit(background_img1, (0,0))
 
 def handle_movement():
     global player_x, player_y, player_velocity_y, is_jumping, score
@@ -189,18 +269,18 @@ def handle_movement():
     keys = pygame.key.get_pressed()
 
     # Horizontal movement
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         player_x -= player_velocity
         if player_x < 0:  # Prevent the player from moving off the left side of the screen
             player_x = 0
 
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         player_x += player_velocity
         if player_x > WIDTH - player_width:  # Prevent the player from moving off the right side of the screen
             player_x = WIDTH - player_width
 
     # Vertical movement (jumping and gravity)
-    if keys[pygame.K_SPACE] and not is_jumping:
+    if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and not is_jumping:
         player_velocity_y = player_jump_velocity
         is_jumping = True
         jump_sound.play()
@@ -218,12 +298,17 @@ def handle_movement():
 
 def main_menu():
     while True:
-        window.fill(WHITE)
-        title_text = largefont.render("Super Lebron", True, BLUE)
-        window.blit(title_text, (WIDTH // 3.5, HEIGHT // 4))
+        #window.fill(WHITE)
+        draw_background_main()
+        #background, bg_image = get_background("bball_bg.jpg")
+        title_text = largefont.render("Super Lebron", True, WHITE)
+        title_rect = title_text.get_rect(center=(WIDTH//2, HEIGHT//4))
+        window.blit(title_text, title_rect)
 
-        start_text = medfont.render("Press Enter to Start", True, BLACK)
-        window.blit(start_text, (WIDTH // 3.5, HEIGHT // 2))
+        start_text = medfont.render("Press Enter to Start", True, WHITE)
+        start_rect = start_text.get_rect(center=(WIDTH// 2, HEIGHT// 2 ))
+        window.blit(start_text, start_rect)
+
         pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
@@ -248,13 +333,19 @@ def main_menu():
 def game_over(start_x, start_y, start_health, start_score):
     global health, score
     while True:
-        window.fill(WHITE)
+        draw_background()
         game_over_text = largefont.render("Game Over", True, RED)
-        window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
-        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3.2, HEIGHT // 2))
-        restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3.2, HEIGHT // 1.5))
+        game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+        window.blit(game_over_text, game_over_rect)
+        #window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
+
+        score_text = medfont.render(f"Final Score: {score}", True, WHITE)
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2.5))
+        window.blit(score_text, score_rect)
+
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE)
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.7))
+        window.blit(restart_text, restart_rect)
         pygame.display.update()
 
         for event in pygame.event.get():
@@ -280,6 +371,14 @@ def game_loop():
     player_x, player_y = 100, HEIGHT - player_height - 100  # Reset position
     player_velocity_y = 0
 
+    #initializing blocks
+    terrain_sheet = pygame.image.load("Terrain.png").convert_alpha()
+    block_x, block_y = 272, 16
+    block_width, block_height = 47, 4
+    gold_bar = get_block(terrain_sheet, block_x, block_y, block_width, block_height)
+    blocks1 = [Block(0 + i * block_width, HEIGHT - 100, gold_bar) for i in range( WIDTH // block_width + 1)]
+    blocks2 = [Block(WIDTH / 4 - block_width / 2 + WIDTH / 2 * i, HEIGHT - player_height - 120, gold_bar) for i in range(2)]
+
     # Initialize start time
     start_time = pygame.time.get_ticks()
 
@@ -290,7 +389,10 @@ def game_loop():
                  range(3)]
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _
                in range(level_data[current_level]["enemy_count"])]
-    boss = BossEnemy(WIDTH - 200, HEIGHT - 150, 150, 150) if level_data[current_level]["boss"] else None
+    enemiesplatform = [PlatformEnemy(random.randint(280, 500), HEIGHT - player_height - 200, 50, 50, random.choice([-3, 3])) for _ in range(2)]
+    boss = BossEnemy(WIDTH / 2 - 75, 10, 150, 150) if level_data[current_level]["boss"] else None
+
+    basketballs = []
 
     # Reset power-up variables
     power_up_message = ""
@@ -303,6 +405,88 @@ def game_loop():
         draw_player()
         draw_health_bar()
         draw_score()
+
+        for block in blocks1:
+            block.draw(window)
+
+        for block in blocks2:
+            block.draw(window)
+
+        player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
+        for j in blocks1:
+            if player_rect.colliderect(j.rect):
+                if player_velocity_y > 0:
+                    player_y = j.rect.top - player_height
+                    player_velocity_y = 0
+                    is_jumping = False
+                    break
+
+        for k in blocks2:
+            if player_rect.colliderect(k.rect):
+                if player_velocity_y > 0:
+                    player_y = k.rect.top - player_height
+                    player_velocity_y = 0
+                    is_jumping = False
+                    break
+
+        if current_level == 2:
+            blocks3 = [Block(WIDTH / 3 - block_width / 2 + WIDTH / 3 * i, HEIGHT - player_height - 200, gold_bar) for i in range(2)]
+            for block in blocks3:
+                block.draw(window)
+            for l in blocks3:
+                if player_rect.colliderect(l.rect):
+                    if player_velocity_y > 0:
+                        player_y = l.rect.top - player_height
+                        player_velocity_y = 0
+                        is_jumping = False
+                        break
+        if current_level == 3:
+            blocks4 = [Block(WIDTH / 3 + block_width * i, HEIGHT - player_height - 200, gold_bar) for i in range( WIDTH // 3 // block_width + 1)]
+            for block in blocks4:
+                block.draw(window)
+            for m in blocks4:
+                if player_rect.colliderect(m.rect):
+                    if player_velocity_y > 0:
+                        player_y = m.rect.top - player_height
+                        player_velocity_y = 0
+                        is_jumping = False
+                        break
+            for enemy in enemiesplatform:
+                enemy.updatePlatformEnemy()
+                window.blit(enemy.image, enemy.rect)
+
+                if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
+                        player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
+                    if active_power_up != "invincibility":
+                        health -= 1.5
+                        hit_sound.play()
+
+            """basketball_spawn_time = pygame.time.get_ticks()
+            while True:
+                current_time = pygame.time.get_ticks()
+                if current_time - basketball_spawn_time >= 10000:
+                    x_position = WIDTH / 2
+                    y_position = 10
+                    basketballs.append(Basketball(x_position, y_position))
+                    basketball_spawn_timer = current_time
+
+                for basketball in basketballs:
+                    basketball.update()
+
+                for basketball in basketballs:
+                    window.blit(basketball.image, basketball.rect)
+
+                for basketball in basketballs.copy():
+                    if player_rect.colliderect(basketball.rect):
+                        health -= 25
+                        basketballs.remove(basketball)
+                        hit_sound.play()
+                for basketball in basketballs:
+                    if basketball.rect.y > HEIGHT:
+                        basketballs.remove(basketball)
+                    elif basketball.rect.x < 0 or basketball.rect.x > WIDTH:
+                        basketballs.remove(basketball)
+            """
 
         handle_movement()
 
@@ -329,7 +513,7 @@ def game_loop():
                 power_ups.remove(power_up)
 
                 active_power_up = power_up_effect
-                power_up_message = f"You got {active_power_up}!"
+                power_up_message = f"You got {active_power_up.replace('_', ' ')}!"
                 power_up_start_time = time.time()
 
                 if active_power_up == "speed_boost":
@@ -358,6 +542,7 @@ def game_loop():
                     health -= 1.5
                     hit_sound.play()
 
+
         if boss:
             boss.update()
             window.blit(boss.image, boss.rect)
@@ -365,7 +550,8 @@ def game_loop():
         # Handle power-up timer expiration
         if active_power_up:
             power_up_text = smallfont.render(power_up_message, True, YELLOW)
-            window.blit(power_up_text, (WIDTH // 3, HEIGHT // 3))
+            power_up_rect = power_up_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
+            window.blit(power_up_text, power_up_rect)
 
         if power_up_start_time and time.time() - power_up_start_time > power_up_duration:
             if active_power_up == "speed_boost":
@@ -424,15 +610,22 @@ def update_high_score(elapsed_time):
 def won_level(start_x, start_y, start_health, start_score, elapsed_time):
     global health, score
     while True:
-        window.fill(WHITE)
+        draw_background()
         win_text = largefont.render("You Won!", True, GREEN)
-        window.blit(win_text, (WIDTH // 3, HEIGHT // 4))
-        score_text = medfont.render(f"Final Score: {score}", True, BLACK)
-        window.blit(score_text, (WIDTH // 3, HEIGHT // 2))
-        time_text = medfont.render(f"Time: {elapsed_time:.2f}s", True, BLACK)
-        window.blit(time_text, (WIDTH // 3, HEIGHT // 1.5))
-        restart_text = smallfont.render("Press Enter to return to Level Select", True, BLACK)
-        window.blit(restart_text, (WIDTH // 3.2, HEIGHT // 1.2))
+        win_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT// 4))
+        window.blit(win_text, win_rect)
+
+        score_text = medfont.render(f"Final Score: {score}", True, WHITE)
+        score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2.5))
+        window.blit(score_text, score_rect)
+
+        time_text = medfont.render(f"Time: {elapsed_time:.2f}s", True, WHITE)
+        time_rect = time_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        window.blit(time_text, time_rect)
+
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE)
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.7))
+        window.blit(restart_text, restart_rect)
         pygame.display.update()
 
         for event in pygame.event.get():
@@ -446,20 +639,21 @@ def won_level(start_x, start_y, start_health, start_score, elapsed_time):
 def level_select():
     global current_level, health, score, player_x, player_y, player_velocity_y
     while True:
-        window.fill(WHITE)
-        level_text = largefont.render("Select Level", True, BLUE)
-        window.blit(level_text, (WIDTH // 3, HEIGHT // 4))
+        draw_background_main()
+        level_text = largefont.render("Select Level", True, WHITE)
+        level_rect = level_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
+        window.blit(level_text, level_rect)
         pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
         for i in range(1, 4):
-            level_button = medfont.render(f"Level {i}", True, BLACK)
+            level_button = medfont.render(f"Level {i}:", True, WHITE)
             high_score_text = smallfont.render(
                 f"Best Time: {high_scores[i]:.2f}s" if high_scores[i] else "No Record",
                 True, GREEN
             )
-            window.blit(level_button, (WIDTH // 3, HEIGHT // 3 + (i - 1) * 50))
-            window.blit(high_score_text, (WIDTH // 3 + 150, HEIGHT // 3 + (i - 1) * 50))
+            window.blit(level_button, (WIDTH // 4.5, HEIGHT // 3.5 + (i - 1) * 75 + 20))
+            window.blit(high_score_text, (WIDTH // 4.5 + 200, HEIGHT // 4 + (i - 1) * 75 + 55))
 
         pygame.display.update()
 
