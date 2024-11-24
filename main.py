@@ -86,11 +86,11 @@ bg_scroll_speed = 2 # variable assigned to the scroll speed of the background
 # Levels
 current_level = 1
 level_data = {
-    1: {"bg": "background.jpeg", "enemy_count": 3,
+    1: {"bg": "background.jpg", "enemy_count": 3,
         "boss": False},
-    2: {"bg": "background.jpeg", "enemy_count": 4,
+    2: {"bg": "background.jpg", "enemy_count": 4,
         "boss": False},
-    3: {"bg": "background.jpeg", "enemy_count": 5,
+    3: {"bg": "background.jpg", "enemy_count": 5,
         "boss": True},
 } # indexable dictionary in a dictionary that contains level information for each specfied level
 
@@ -168,7 +168,7 @@ class PlatformEnemy(pygame.sprite.Sprite):
 
     def updatePlatformEnemy(self):
         self.rect.x += self.speed
-        if self.rect.right >= 550 or self.rect.left <= 280:
+        if self.rect.right >= 540 or self.rect.left <= 269:
             self.speed *= -1
 
         if current_level == 3:
@@ -211,6 +211,22 @@ class Block(Object):
 
     def draw(self, screen):
         screen.blit(self.image, (self.rect.x, self.rect.y))
+
+class Basketball(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.image.load("basketball.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (15,15))
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.velocity_y = 0
+        self.gravity = 0.8
+        self.velocity_x = random.randint(-3,3)
+
+    def update(self):
+        self.velocity_y += self.gravity  # applies gravity to enemy
+        self.rect.y += self.velocity_y  # changes the rectangle of the enemy with vertical motion
+        self.rect.x += self.velocity_x
+
 
 # Game Logic Functions
 def get_block(image, x, y, width, height):
@@ -373,8 +389,10 @@ def game_loop():
                  range(3)]
     enemies = [Enemy(random.randint(50, WIDTH - 50), HEIGHT - player_height - 100, 50, 50, random.choice([-3, 3])) for _
                in range(level_data[current_level]["enemy_count"])]
-    enemiesplatform = [PlatformEnemy(random.randint(280, 530), HEIGHT - player_height - 200, 50, 50, random.choice([-3, 3])) for _ in range(2)]
+    enemiesplatform = [PlatformEnemy(random.randint(280, 500), HEIGHT - player_height - 200, 50, 50, random.choice([-3, 3])) for _ in range(2)]
     boss = BossEnemy(WIDTH / 2 - 75, 10, 150, 150) if level_data[current_level]["boss"] else None
+
+    basketballs = []
 
     # Reset power-up variables
     power_up_message = ""
@@ -443,8 +461,32 @@ def game_loop():
                         health -= 1.5
                         hit_sound.play()
 
+            """basketball_spawn_time = pygame.time.get_ticks()
+            while True:
+                current_time = pygame.time.get_ticks()
+                if current_time - basketball_spawn_time >= 10000:
+                    x_position = WIDTH / 2
+                    y_position = 10
+                    basketballs.append(Basketball(x_position, y_position))
+                    basketball_spawn_timer = current_time
 
+                for basketball in basketballs:
+                    basketball.update()
 
+                for basketball in basketballs:
+                    window.blit(basketball.image, basketball.rect)
+
+                for basketball in basketballs.copy():
+                    if player_rect.colliderect(basketball.rect):
+                        health -= 25
+                        basketballs.remove(basketball)
+                        hit_sound.play()
+                for basketball in basketballs:
+                    if basketball.rect.y > HEIGHT:
+                        basketballs.remove(basketball)
+                    elif basketball.rect.x < 0 or basketball.rect.x > WIDTH:
+                        basketballs.remove(basketball)
+            """
 
         handle_movement()
 
