@@ -212,21 +212,47 @@ class Block(Object):
     def draw(self, screen):
         screen.blit(self.image, (self.rect.x, self.rect.y))
 
+class Basketball:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.radius = 10
+        self.color = RED
+        self.speed_y = random.randint(3, 6)
+
+    def update(self):
+        """Move the basketball down."""
+        self.y += self.speed_y
+
+    def draw(self, screen):
+        """Draw the basketball."""
+        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
+
+    def is_off_screen(self):
+        """Check if the basketball has fallen off the screen."""
+        return self.y - self.radius > HEIGHT
+""""
+basketball_counter = 0
 class Basketball(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.image = pygame.image.load("basketball.png").convert_alpha()
         self.image = pygame.transform.scale(self.image, (15,15))
-        self.rect = self.image.get_rect(topleft=(x,y))
-        self.velocity_y = 0
+        self.rect = self.image.get_rect(center=(x, y))
         self.gravity = 0.8
+        self.velocity_y = 0 
         self.velocity_x = random.randint(-3,3)
 
     def update(self):
         self.velocity_y += self.gravity  # applies gravity to enemy
         self.rect.y += self.velocity_y  # changes the rectangle of the enemy with vertical motion
         self.rect.x += self.velocity_x
-
+        if self.rect.top > HEIGHT:  # Remove basketball if it goes off-screen
+            self.kill()  # Automatically removes from sprite groups
+        elif self.rect.right > WIDTH or self.rect.left < 0:
+            self.kill()
+        d =- 1/2at^2
+    """
 
 # Game Logic Functions
 def get_block(image, x, y, width, height):
@@ -392,6 +418,9 @@ def game_loop():
     enemiesplatform = [PlatformEnemy(random.randint(280, 500), HEIGHT - player_height - 200, 50, 50, random.choice([-3, 3])) for _ in range(2)]
     boss = BossEnemy(WIDTH / 2 - 75, 10, 150, 150) if level_data[current_level]["boss"] else None
 
+    SPAWN_INTERVAL = 100 # Spawn a basketball every 2 seconds
+    last_spawn_time = pygame.time.get_ticks()
+    clock.tick(60)
     basketballs = []
 
     # Reset power-up variables
@@ -461,10 +490,33 @@ def game_loop():
                         health -= 1.5
                         hit_sound.play()
 
+            current_time = pygame.time.get_ticks()
+            if current_time - last_spawn_time > SPAWN_INTERVAL:
+                spawn_x = random.randint(20, WIDTH - 20)  # Random x-position
+                basketballs.append(Basketball(spawn_x, 0))  # Add new basketball to the list
+                last_spawn_time = current_time
+
+            # Update basketballs
+            for basketball in basketballs[:]:  # Use a copy of the list to allow safe removal
+                basketball.update()
+                if basketball.is_off_screen():
+                    basketballs.remove(basketball)  # Remove basketball if off-screen
+
+            # Check for collisions with the player
+            # Check for collisions
+            for basketball in basketballs[:]:  # Iterate over a copy of the list
+                basketball_rect = pygame.Rect(basketball.x - basketball.radius, basketball.y - basketball.radius,
+                                              basketball.radius * 2, basketball.radius * 2)
+                if player_rect.colliderect(basketball_rect):
+                    print("Basketball hit the player!")
+                    health -= 2
+                    basketballs.remove(basketball)  # Remove basketball on collision
+
             """basketball_spawn_time = pygame.time.get_ticks()
+            basketballs = []
             while True:
                 current_time = pygame.time.get_ticks()
-                if current_time - basketball_spawn_time >= 10000:
+                if current_time - basketball_spawn_time >= 2:
                     x_position = WIDTH / 2
                     y_position = 10
                     basketballs.append(Basketball(x_position, y_position))
@@ -478,7 +530,7 @@ def game_loop():
 
                 for basketball in basketballs.copy():
                     if player_rect.colliderect(basketball.rect):
-                        health -= 25
+                        health -= 2.5
                         basketballs.remove(basketball)
                         hit_sound.play()
                 for basketball in basketballs:
