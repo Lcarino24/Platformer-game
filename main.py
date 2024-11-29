@@ -6,9 +6,9 @@ import random #module that helps generate random numbers
 pygame.init()
 
 # Screen Setup
-WIDTH, HEIGHT = 800, 600 #dual assignemnt of dimensions for the game
+WIDTH, HEIGHT = 800, 600 #dual assignmentt of dimensions for the game
 window = pygame.display.set_mode((WIDTH, HEIGHT)) #assigns display window to window variable
-pygame.display.set_caption('Platformer Game')
+pygame.display.set_caption('Platformer Game') # game caption
 
 # Colors
 WHITE = (255, 255, 255)
@@ -167,13 +167,13 @@ class PlatformEnemy(pygame.sprite.Sprite):
         self.jump_timer = random.randint(100, 200)  # Timer for random jumps
 
     def updatePlatformEnemy(self):
-        self.rect.x += self.speed
-        if self.rect.right >= 540 or self.rect.left <= 269:
+        self.rect.x += self.speed # change x position with speed
+        if self.rect.right >= 540 or self.rect.left <= 269: # if enemies on platform exceed boundaries given by platform switch speed
             self.speed *= -1
 
         if current_level == 3:
             self.jump_timer -= 1 # counts down every frame
-            if self.jump_timer <= 0 and not self.is_jumping:
+            if self.jump_timer <= 0 and not self.is_jumping: # if timer for jumping is equal to zero and not jumping, jump
                 self.vertical_velocity = -10  # Set jump velocity
                 self.is_jumping = True # when timer reaches 0 and is not jumping, make enemy jump
                 self.jump_timer = random.randint(100, 200)  # Reset timer
@@ -190,47 +190,29 @@ class PlatformEnemy(pygame.sprite.Sprite):
 
 
 #producing objects
-class Object(pygame.sprite.Sprite):
-    def __init__(self, x, y, width, height, name=None):
+class Object(pygame.sprite.Sprite): # class definition for object (allows other classes to inherit this class)
+    def __init__(self, x, y, width, height, name=None): # initializes necessary parameters
         super().__init__()
-        self.rect = pygame.Rect(x, y, width, height)
-        self.image = pygame.Surface((width, height), pygame.SRCALPHA)
-        self.width = width
-        self.height = height
-        self.name = name
-    def draw(self, win):
-        win.blit(self.image, (self.rect.x), self.rect.y)
+        self.rect = pygame.Rect(x, y, width, height) # set rectangle with x and y position with width and height as dimension
+        self.image = pygame.Surface((width, height), pygame.SRCALPHA) # creates surface for image to be rendered on
+        self.width = width # width parameter
+        self.height = height # height parameter
+        self.name = name # name
 
-class Block(Object):
-    def __init__(self, x, y, image):
-        super().__init__(x, y, image.get_width(), image.get_height())
-        self.x = x
-        self.y = y
+    def draw(self, win): # draw self on window on the appropriate rectangle
+        win.blit(self.image, self.rect.x, self.rect.y)
+
+class Block(Object): # initializes class for platform objects
+    def __init__(self, x, y, image): # initializes Block class
+        super().__init__(x, y, image.get_width(), image.get_height()) # initializes sprite
+        self.x = x # x position
+        self.y = y # y position
         self.image = image
-        self.rect = self.image.get_rect(topleft=(x,y))
+        self.rect = self.image.get_rect(topleft=(x,y)) # positions image's top left corner at x,y
 
     def draw(self, screen):
-        screen.blit(self.image, (self.rect.x, self.rect.y))
+        screen.blit(self.image, (self.rect.x, self.rect.y)) # draws itself on screen
 
-class Basketball:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.radius = 10
-        self.color = RED
-        self.speed_y = random.randint(3, 6)
-
-    def update(self):
-        """Move the basketball down."""
-        self.y += self.speed_y
-
-    def draw(self, screen):
-        """Draw the basketball."""
-        pygame.draw.circle(screen, self.color, (self.x, self.y), self.radius)
-
-    def is_off_screen(self):
-        """Check if the basketball has fallen off the screen."""
-        return self.y - self.radius > HEIGHT
 """"
 basketball_counter = 0
 class Basketball(pygame.sprite.Sprite):
@@ -256,7 +238,7 @@ class Basketball(pygame.sprite.Sprite):
 
 # Game Logic Functions
 def get_block(image, x, y, width, height):
-    return image.subsurface(pygame.Rect(x, y, width, height))
+    return image.subsurface(pygame.Rect(x, y, width, height)) # retrieves image and places rectangle at appropriate position
 
 def draw_health_bar():
     pygame.draw.rect(window, RED, (20, 20, 200, 20)) # places red rectangle
@@ -276,70 +258,69 @@ def draw_player():
 
 
 def draw_background():
-    global bg_x
+    global bg_x # makes variable global
     background_img = pygame.image.load(level_data[current_level]["bg"]) # loads background image by indexing the level data and selecting specific background
     background_img = pygame.transform.scale(background_img, (WIDTH, HEIGHT)) # scales background to appropriate dimensions
     window.blit(background_img, (0, 0)) # places image on the window such that it fits the whole screen
-    bg_x -= bg_scroll_speed
-    if bg_x <= -WIDTH:
+    bg_x -= bg_scroll_speed # moves the background horizontally at speed defined previously
+    if bg_x <= -WIDTH: # if background moves beyond boundary, reset it to position 0
         bg_x = 0
 
-def draw_background_main():
-    background_img1 = pygame.image.load("bball_bg.jpg")
-    background_img1 = pygame.transform.scale(background_img1, (WIDTH, HEIGHT))
-    window.blit(background_img1, (0,0))
+def draw_background_main(): # draws main screen background
+    background_img1 = pygame.image.load("bball_bg.jpg") # import image
+    background_img1 = pygame.transform.scale(background_img1, (WIDTH, HEIGHT)) # scale it
+    window.blit(background_img1, (0,0)) # put in on window in top left corner to fill screen
 
 def handle_movement():
-    global player_x, player_y, player_velocity_y, is_jumping, score
+    global player_x, player_y, player_velocity_y, is_jumping, score #global variables
 
-    keys = pygame.key.get_pressed()
+    keys = pygame.key.get_pressed() #initializes pygame method that detects key activation
 
     # Horizontal movement
-    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        player_x -= player_velocity
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]: # allows left movement with a key or left arrow
+        player_x -= player_velocity # adjust player horizontal position by horizontal velocity
         if player_x < 0:  # Prevent the player from moving off the left side of the screen
-            player_x = 0
+            player_x = 0 # player position reset to 0
 
-    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        player_x += player_velocity
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]: # allows right movement with d key or right arrow
+        player_x += player_velocity # adjust player horizontal position by same horizontal velocity for left
         if player_x > WIDTH - player_width:  # Prevent the player from moving off the right side of the screen
-            player_x = WIDTH - player_width
+            player_x = WIDTH - player_width # resets player position to max width
 
     # Vertical movement (jumping and gravity)
-    if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and not is_jumping:
-        player_velocity_y = player_jump_velocity
-        is_jumping = True
-        jump_sound.play()
+    if (keys[pygame.K_SPACE] or keys[pygame.K_UP] or keys[pygame.K_w]) and not is_jumping: # allows for jumping to be done with space, w, or up arrow
+        player_velocity_y = player_jump_velocity # sets player vertical velocity
+        is_jumping = True # sets variable to true
+        jump_sound.play() # plays sound
 
     # Apply gravity
-    player_velocity_y += gravity
-    player_y += player_velocity_y
+    player_velocity_y += gravity # changes player y velocity by subtracting gravity
+    player_y += player_velocity_y # changes player y position by player y velocity
 
     # Prevent the player from falling through the ground
-    if player_y >= HEIGHT - player_height - 100:
+    if player_y >= HEIGHT - player_height - 100: # resets player position to defined boundary of platform if going past certain height
         player_y = HEIGHT - player_height - 100
-        player_velocity_y = 0
-        is_jumping = False
+        player_velocity_y = 0 # sets vertical velocity to 0 in case of jumping for example
+        is_jumping = False # sets value to false in order to indicate not jumping anymore
 
 
 def main_menu():
     while True:
-        #window.fill(WHITE)
-        draw_background_main()
+        draw_background_main() # calls function to draw background
         #background, bg_image = get_background("bball_bg.jpg")
-        title_text = largefont.render("Super Lebron", True, WHITE)
-        title_rect = title_text.get_rect(center=(WIDTH//2, HEIGHT//4))
-        window.blit(title_text, title_rect)
+        title_text = largefont.render("Super Lebron", True, WHITE) # sets title
+        title_rect = title_text.get_rect(center=(WIDTH//2, HEIGHT//4)) # sets title rectangle
+        window.blit(title_text, title_rect) # puts text on screen
 
-        start_text = medfont.render("Press Enter to Start", True, WHITE)
+        start_text = medfont.render("Press Enter to Start", True, WHITE) # start text
         start_rect = start_text.get_rect(center=(WIDTH// 2, HEIGHT// 2 ))
         window.blit(start_text, start_rect)
 
-        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
-        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
+        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30) # for exit circle
+        pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30))) # for exit arrow
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
 
-        pygame.display.update()
+        pygame.display.update() # updates display
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -354,22 +335,22 @@ def main_menu():
                     return
             if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
                 pygame.quit()
-                sys.exit()
+                sys.exit() # if mouse selects the rectangular region in the top right corner where the circle is, exit game
 
 def game_over(start_x, start_y, start_health, start_score):
-    global health, score
+    global health, score #globalizes health, score
     while True:
-        draw_background()
-        game_over_text = largefont.render("Game Over", True, RED)
+        draw_background() # draws background
+        game_over_text = largefont.render("Game Over", True, RED) # display game over text
         game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
         window.blit(game_over_text, game_over_rect)
         #window.blit(game_over_text, (WIDTH // 3.25, HEIGHT // 4))
 
-        score_text = medfont.render(f"Final Score: {score}", True, WHITE)
+        score_text = medfont.render(f"Final Score: {score}", True, WHITE) # display final score using score variable
         score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2.5))
         window.blit(score_text, score_rect)
 
-        restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE)
+        restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE) # more display text
         restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.7))
         window.blit(restart_text, restart_rect)
         pygame.display.update()
@@ -377,38 +358,38 @@ def game_over(start_x, start_y, start_health, start_score):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
+                sys.exit() # if user selects quit, uninitialize all modules and close program
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
+                if event.key == pygame.K_RETURN: # if enter key is pressed, return to level select screen
                     level_select()
                     return
 
 # Global variable for high score
 high_scores = {1: None, 2: None, 3: None}  # High scores for levels
-import time
+import time # import time module
 
 def game_loop():
-    global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y, high_scores
+    global health, score, is_jumping, current_level, player_x, player_y, player_velocity_y, high_scores # globalizes variables
 
     # Reset player state for the new level
     health = 100
     score = 0
     is_jumping = False
     player_x, player_y = 100, HEIGHT - player_height - 100  # Reset position
-    player_velocity_y = 0
+    player_velocity_y = 0 # reset velocity
 
     #initializing blocks
-    terrain_sheet = pygame.image.load("Terrain.png").convert_alpha()
-    block_x, block_y = 272, 16
-    block_width, block_height = 47, 4
-    gold_bar = get_block(terrain_sheet, block_x, block_y, block_width, block_height)
-    blocks1 = [Block(0 + i * block_width, HEIGHT - 100, gold_bar) for i in range( WIDTH // block_width + 1)]
-    blocks2 = [Block(WIDTH / 4 - block_width / 2 + WIDTH / 2 * i, HEIGHT - player_height - 120, gold_bar) for i in range(2)]
+    terrain_sheet = pygame.image.load("Terrain.png").convert_alpha() # load terrain png and remove background for pygame
+    block_x, block_y = 272, 16 # position of desired block on sheet
+    block_width, block_height = 47, 4 # width and height of desired block in
+    gold_bar = get_block(terrain_sheet, block_x, block_y, block_width, block_height) # calls function to give block a surface
+    blocks1 = [Block(0 + i * block_width, HEIGHT - 100, gold_bar) for i in range( WIDTH // block_width + 1)] # main platform blocks done by iterating the block class over desired interval
+    blocks2 = [Block(WIDTH / 4 - block_width / 2 + WIDTH / 2 * i, HEIGHT - player_height - 120, gold_bar) for i in range(2)] # places 2 more blocks in an elevated position
 
     # Initialize start time
-    start_time = pygame.time.get_ticks()
+    start_time = pygame.time.get_ticks() # retrieves a time
 
-    # Create coins, power-ups, and enemies for the current level
+    # Create coins, power-ups, and enemies for the current level: gives them position and defines other parameters like jumping or speed
     coins = [Coin(random.randint(100, 700), random.randint(340, 490)) for _ in
              range(level_data[current_level]["enemy_count"])]
     power_ups = [PowerUp(random.randint(100, 700), random.randint(340, 490), random.choice(POWER_UPS)) for _ in
@@ -419,8 +400,8 @@ def game_loop():
     boss = BossEnemy(WIDTH / 2 - 75, 10, 150, 150) if level_data[current_level]["boss"] else None
 
     SPAWN_INTERVAL = 100 # Spawn a basketball every 2 seconds
-    last_spawn_time = pygame.time.get_ticks()
-    clock.tick(60)
+    last_spawn_time = pygame.time.get_ticks() # retrieves another time
+    clock.tick(60) # caps frame rate at 60 frames per second
     basketballs = []
 
     # Reset power-up variables
@@ -430,27 +411,27 @@ def game_loop():
     power_up_duration = 5
 
     while True:
-        draw_background()
-        draw_player()
-        draw_health_bar()
-        draw_score()
+        draw_background() # draw background for game level
+        draw_player() # draw player
+        draw_health_bar() # draw health bar
+        draw_score() # draw score
 
-        for block in blocks1:
+        for block in blocks1: # iterates through blocks1 and draws them
             block.draw(window)
 
-        for block in blocks2:
+        for block in blocks2: # iterates through blocks2 and draws them
             block.draw(window)
 
-        player_rect = pygame.Rect(player_x, player_y, player_width, player_height)
-        for j in blocks1:
-            if player_rect.colliderect(j.rect):
-                if player_velocity_y > 0:
-                    player_y = j.rect.top - player_height
-                    player_velocity_y = 0
-                    is_jumping = False
-                    break
+        player_rect = pygame.Rect(player_x, player_y, player_width, player_height) # defines player's rectangle
+        for j in blocks1: # collision detection for blocks 1
+            if player_rect.colliderect(j.rect): # if player collides with blocks
+                if player_velocity_y > 0: # if player's y velocity is greater than 0
+                    player_y = j.rect.top - player_height # set to the appropriate height (player's height above the blocks)
+                    player_velocity_y = 0 # set player velocity to 0
+                    is_jumping = False # sets jumping to false
+                    break # exits loop
 
-        for k in blocks2:
+        for k in blocks2: # does the same thing explained above, however, since these are elevated, there is no collision on bottom, allowing the player's rectangle to pass through and then exhibit collision on top
             if player_rect.colliderect(k.rect):
                 if player_velocity_y > 0:
                     player_y = k.rect.top - player_height
@@ -459,37 +440,38 @@ def game_loop():
                     break
 
         if current_level == 2:
-            blocks3 = [Block(WIDTH / 3 - block_width / 2 + WIDTH / 3 * i, HEIGHT - player_height - 200, gold_bar) for i in range(2)]
+            blocks3 = [Block(WIDTH / 3 - block_width / 2 + WIDTH / 3 * i, HEIGHT - player_height - 200, gold_bar) for i in range(2)] # 2 more blocks, specifically for level 3
             for block in blocks3:
-                block.draw(window)
-            for l in blocks3:
+                block.draw(window) # iterates through list of bocks3 and draws them
+            for l in blocks3: # same collision detection described above
                 if player_rect.colliderect(l.rect):
                     if player_velocity_y > 0:
                         player_y = l.rect.top - player_height
                         player_velocity_y = 0
                         is_jumping = False
                         break
+
         if current_level == 3:
-            blocks4 = [Block(WIDTH / 3 + block_width * i, HEIGHT - player_height - 200, gold_bar) for i in range( WIDTH // 3 // block_width + 1)]
+            blocks4 = [Block(WIDTH / 3 + block_width * i, HEIGHT - player_height - 200, gold_bar) for i in range( WIDTH // 3 // block_width + 1)] # defines another platform solely for level 3
             for block in blocks4:
-                block.draw(window)
-            for m in blocks4:
+                block.draw(window) # draws blocks
+            for m in blocks4: # same collision
                 if player_rect.colliderect(m.rect):
                     if player_velocity_y > 0:
                         player_y = m.rect.top - player_height
                         player_velocity_y = 0
                         is_jumping = False
                         break
-            for enemy in enemiesplatform:
+            for enemy in enemiesplatform: # draws and updates enemies in the specific list of platform enemies
                 enemy.updatePlatformEnemy()
                 window.blit(enemy.image, enemy.rect)
 
                 if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
-                        player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
-                    if active_power_up != "invincibility":
+                        player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top: # collision detection for player and enemy by checking if rectangles overlap
+                    if active_power_up != "invincibility": # if active power up is not invincibility, take 1.5 off health
                         health -= 1.5
-                        hit_sound.play()
-
+                        hit_sound.play() # make sound
+            """ # testing for basketball
             current_time = pygame.time.get_ticks()
             if current_time - last_spawn_time > SPAWN_INTERVAL:
                 spawn_x = random.randint(20, WIDTH - 20)  # Random x-position
@@ -512,7 +494,7 @@ def game_loop():
                     health -= 2
                     basketballs.remove(basketball)  # Remove basketball on collision
 
-            """basketball_spawn_time = pygame.time.get_ticks()
+            basketball_spawn_time = pygame.time.get_ticks()
             basketballs = []
             while True:
                 current_time = pygame.time.get_ticks()
@@ -540,98 +522,99 @@ def game_loop():
                         basketballs.remove(basketball)
             """
 
-        handle_movement()
+        handle_movement() # calls handle movement function to enable user to use keys
 
         # Draw and update coins
         for coin in coins:
-            window.blit(coin.image, coin.rect)
+            window.blit(coin.image, coin.rect) # draws coins on screen
 
         # Check for collisions with coins
-        for coin in coins[:]:
+        for coin in coins[:]: # iterates through copy of coins list to detect collision
             if player_x < coin.rect.right and player_x + player_width > coin.rect.left and \
-                    player_y < coin.rect.bottom and player_y + player_height > coin.rect.top:
+                    player_y < coin.rect.bottom and player_y + player_height > coin.rect.top: # if rectangle of player overlaps with rectangle of coin, remove coin and add to score
                 coins.remove(coin)
                 score += 1
-                coin_sound.play()
+                coin_sound.play() # make noise
 
         # Draw and update power-ups
-        for power_up in power_ups:
-            window.blit(power_up.image, power_up.rect)
+        for power_up in power_ups: #
+            window.blit(power_up.image, power_up.rect) # display powerups on screen
 
             # Check for collisions with power-ups
             if player_x < power_up.rect.right and player_x + player_width > power_up.rect.left and \
-                    player_y < power_up.rect.bottom and player_y + player_height > power_up.rect.top:
-                power_up_effect = power_up.type
-                power_ups.remove(power_up)
+                    player_y < power_up.rect.bottom and player_y + player_height > power_up.rect.top: # overlapping rectangle detection
+                power_up_effect = power_up.type # defines the power up effect according to what the player interacted with
+                power_ups.remove(power_up) # removes the power up from the screen
 
-                active_power_up = power_up_effect
-                power_up_message = f"You got {active_power_up.replace('_', ' ')}!"
-                power_up_start_time = time.time()
+                active_power_up = power_up_effect # gives the player the actual ability
+                power_up_message = f"You got {active_power_up.replace('_', ' ')}!" # displays text without underscore
+                power_up_start_time = time.time() # initializes the time of picking up the power up
 
-                if active_power_up == "speed_boost":
+                if active_power_up == "speed_boost": # increases player velocity if power up is speed boost. timing is managed later
                     player_velocity = 20
-                elif active_power_up == "invincibility":
-                    health = min(health + 50, 100)
+                elif active_power_up == "invincibility": # already defined above that only if the active power up isn't invincibility, health is removed. Therefore, it doesn't need to be considered here
+                    health = min(health + 50, 100) # takes the minimum between the two values to increase health
                 elif active_power_up == "health_restore":
-                    health = 100
+                    health = 100 # resets health variable to 100
                 coin_sound.play()
 
         # Check if all coins and power-ups are collected
         if not coins and not power_ups:
             elapsed_time = (pygame.time.get_ticks() - start_time) / 1000  # Convert milliseconds to seconds
-            update_high_score(elapsed_time)
-            won_level(player_x, player_y, health, score, elapsed_time)
+            update_high_score(elapsed_time) # updates high score
+            won_level(player_x, player_y, health, score, elapsed_time) # displays win screen with function defined below
             return
 
         # Handle enemies and collisions
         for enemy in enemies:
-            enemy.update()
-            window.blit(enemy.image, enemy.rect)
+            enemy.update() # updates enemies according to function defined in enemy class
+            window.blit(enemy.image, enemy.rect) # updates the screen with enemies
 
             if player_x < enemy.rect.right and player_x + player_width > enemy.rect.left and \
-                    player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top:
-                if active_power_up != "invincibility":
-                    health -= 1.5
-                    hit_sound.play()
+                    player_y < enemy.rect.bottom and player_y + player_height > enemy.rect.top: # checks for collision with overlap between enemies' and player's rectangle
+                if active_power_up != "invincibility": # here is where the collision does damage. Notice that only if the active power-up isn't invincibility, do enemies do damage
+                    health -= 1.5 # decrease health by this amount
+                    hit_sound.play() # make sound
 
-
+        """ # function that would've updates the boss if we had him moving instead of 'throwing' basketballs
         if boss:
             boss.update()
             window.blit(boss.image, boss.rect)
+        """
 
         # Handle power-up timer expiration
-        if active_power_up:
+        if active_power_up: # displays power up message on screen with associated message
             power_up_text = smallfont.render(power_up_message, True, YELLOW)
             power_up_rect = power_up_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
             window.blit(power_up_text, power_up_rect)
 
-        if power_up_start_time and time.time() - power_up_start_time > power_up_duration:
+        if power_up_start_time and time.time() - power_up_start_time > power_up_duration: # timer for power ups
             if active_power_up == "speed_boost":
-                player_velocity = 5
-            active_power_up = None
-            power_up_message = ""
+                player_velocity = 5 # resets player_velocity to 5
+            active_power_up = None # removes active power up by setting boolean value to None
+            power_up_message = "" # sets power up move to empty string thus 'removing' it
 
-        if health <= 0:
+        if health <= 0: # if health is equal to or less than 0 then display game over screen using game_over function
             game_over(100, HEIGHT - player_height - 100, 100, 0)
             return
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
+                sys.exit() # if player quits game, exit and close all modules
 
-        pygame.display.update()
-        clock.tick(60)
+        pygame.display.update() # update display
+        clock.tick(60) # caps frame rate to 60 fps
 
 
-import json
+import json # importing module
 
 # File to store high scores
 HIGH_SCORE_FILE = "high_scores.json"
 
 
 def load_high_scores():
-    global high_scores
+    global high_scores # globalizes variable
     try:
         with open(HIGH_SCORE_FILE, 'r') as file:
             high_scores = json.load(file)
@@ -659,10 +642,10 @@ def update_high_score(elapsed_time):
         high_scores[current_level] = elapsed_time
         save_high_scores()  # Save the updated high scores to the file
 
-def won_level(start_x, start_y, start_health, start_score, elapsed_time):
-    global health, score
+def won_level(start_x, start_y, start_health, start_score, elapsed_time): # displays high score screen
+    global health, score # globalizes variables
     while True:
-        draw_background()
+        draw_background() # draws the background with text
         win_text = largefont.render("You Won!", True, GREEN)
         win_rect = win_text.get_rect(center=(WIDTH // 2, HEIGHT// 4))
         window.blit(win_text, win_rect)
@@ -678,75 +661,74 @@ def won_level(start_x, start_y, start_health, start_score, elapsed_time):
         restart_text = smallfont.render("Press Enter to return to Level Select", True, WHITE)
         restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT // 1.7))
         window.blit(restart_text, restart_rect)
-        pygame.display.update()
+        pygame.display.update() # updates display
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
+                sys.exit() # if user quits, quit window and exit all modules
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
+                if event.key == pygame.K_RETURN: # if return is pressed, go to level select
                     level_select()
                     return  # Exit the function to return to the caller
-def level_select():
-    global current_level, health, score, player_x, player_y, player_velocity_y
+def level_select(): # level seclect display
+    global current_level, health, score, player_x, player_y, player_velocity_y # globalizes variables
     while True:
-        draw_background_main()
+        draw_background_main() # draws main screen background
         level_text = largefont.render("Select Level", True, WHITE)
         level_rect = level_text.get_rect(center=(WIDTH // 2, HEIGHT // 4))
         window.blit(level_text, level_rect)
-        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
+        pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)# exit circle
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
         for i in range(1, 4):
-            level_button = medfont.render(f"Level {i}:", True, WHITE)
+            level_button = medfont.render(f"Level {i}:", True, WHITE) # level text
             high_score_text = smallfont.render(
                 f"Best Time: {high_scores[i]:.2f}s" if high_scores[i] else "No Record",
-                True, GREEN
-            )
-            window.blit(level_button, (WIDTH // 4.5, HEIGHT // 3.5 + (i - 1) * 75 + 20))
-            window.blit(high_score_text, (WIDTH // 4.5 + 200, HEIGHT // 4 + (i - 1) * 75 + 55))
+                True, GREEN) # displays high score text
+            window.blit(level_button, (WIDTH // 4.5, HEIGHT // 3.5 + (i - 1) * 75 + 20)) # displays level test using loop
+            window.blit(high_score_text, (WIDTH // 4.5 + 200, HEIGHT // 4 + (i - 1) * 75 + 55)) # displays high score text using loop
 
-        pygame.display.update()
+        pygame.display.update() # updates display
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
-            mousepos = pygame.mouse.get_pos()
-            mousex = int(mousepos[0])
-            mousey = int(mousepos[1])
+                sys.exit() # if user exits, close window and modules
+            mousepos = pygame.mouse.get_pos() # retrieves mouse position
+            mousex = int(mousepos[0]) # indexes position to get x
+            mousey = int(mousepos[1]) # indexes position to get y
 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
+                if event.key == pygame.K_1: # if level 1 is selected, initialize these variables
                     health = 100
                     score = 0
                     player_x = 100
                     player_y = HEIGHT - player_height - 100
                     player_velocity_y = 0
                     current_level = 1
-                    game_loop()
+                    game_loop() # run the game loop
                     return
-                elif event.key == pygame.K_2:
+                elif event.key == pygame.K_2: # if 2 is selected, initialize these variables
                     health = 100
                     score = 0
                     player_x = 100
                     player_y = HEIGHT - player_height - 100
                     player_velocity_y = 0
                     current_level = 2
-                    game_loop()
+                    game_loop() # run game loop
                     return
-                elif event.key == pygame.K_3:
+                elif event.key == pygame.K_3: # if 3 is selected, initialize these variables
                     health = 100
                     score = 0
                     player_x = 100
                     player_y = HEIGHT - player_height - 100
                     player_velocity_y = 0
                     current_level = 3
-                    game_loop()
+                    game_loop() # run game loop
                     return
             if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
-                main_menu()
+                main_menu() # return to main menu if back button on level select is pressed
                 return
 
 
@@ -755,10 +737,10 @@ def level_select():
 def main():
     load_high_scores()  # Load saved high scores
     while True:
-        main_menu()
-        level_select()
-        game_loop()
+        main_menu() # load main menu
+        level_select() # load level select
+        game_loop() # perform game loop
 
 
 if __name__ == "__main__":
-    main()
+    main() # is file is run, run the main function which essentially runs everything else through main_menu, level_select, and most importantly, game_loop
