@@ -37,6 +37,28 @@ is_jumping = False #inital boolean value assigned to whether player is jumping o
 health = 100 #initializion of health
 score = 0 #initializtion of score
 
+def text_objects(text, colour, size='small'):  # allows strings to be associated with the fonts
+    if size == 'tiny':
+        textSurface = smallfont.render(text, True, colour)
+    if size == 'small':
+        textSurface = smallfont.render(text, True, colour)
+    if size == 'medium':
+        textSurface = medfont.render(text, True, colour)
+    if size == 'large':
+        textSurface = largefont.render(text, True, colour)
+
+    return textSurface, textSurface.get_rect()
+def text_to_button(msg, colour, button_x, button_y, button_width, button_height,
+                   size='small'):  # allows text to appear in more specific locations
+    textSurf, textRect = text_objects(msg, colour, size)
+    textRect.center = ((button_x + (button_width / 2)), button_y + (button_height / 2))
+    window.blit(textSurf, textRect)
+
+def message_to_screen(msg, black, cordy=0, size='small'):  # allows text to appear on screen, only can adjust on y-axis
+    textSurf, textRect = text_objects(msg, black, size)
+    textRect.center = (int(800 / 2), int(600 / 2) + cordy)
+    window.blit(textSurf, textRect)
+
 
 def scale_image(image, max_width, max_height): #This function scales an image such that it fits in the parameters given in the function while preserving the aspect ratio
     original_width, original_height = image.get_size()
@@ -334,7 +356,8 @@ def main_menu():
         start_text = medfont.render("Press Enter to Start", True, WHITE)
         start_rect = start_text.get_rect(center=(WIDTH// 2, HEIGHT// 2 ))
         window.blit(start_text, start_rect)
-
+        pygame.draw.circle(window, (0, 132, 255), (650, 470), 25)
+        text_to_button('i', WHITE, 600, 445, 100, 50)
         pygame.draw.circle(window, (0, 132, 255), (30, 30), 30)
         pygame.draw.polygon(window, WHITE, ((30, 5), (30, 55), (5, 30)))
         pygame.draw.rect(window, WHITE, (30, 18, 25, 25))
@@ -352,9 +375,33 @@ def main_menu():
                 if event.key == pygame.K_RETURN:
                     level_select()
                     return
+            if 625 <= mousex <= 675 and 443 <= mousey <= 494 and event.type == pygame.MOUSEBUTTONDOWN:
+                info()
             if 0 <= mousex <= 60 and 0 <= mousey <= 60 and event.type == pygame.MOUSEBUTTONDOWN:
                 pygame.quit()
                 sys.exit()
+def info():  # help screen for game
+    while True:
+        window.fill(WHITE)
+        message_to_screen(
+            'The goal of Super Lebron is to claim all the coins and power-ups in the quickest time possible!',
+            BLACK, -200, size='tiny')
+        message_to_screen('You can move with the arrow keys or WASD', BLACK, -160, size='tiny')
+        message_to_screen('You cannot let the Steph Curry hit you (does alot of damage)', BLACK, -120, size='tiny')
+        message_to_screen('Power-ups last for 5 seconds!', BLACK, -80, size='tiny')
+        message_to_screen('Start the game by typing 1,2,3 in the level select screen', BLACK, -40, size='tiny')
+        message_to_screen('Good Luck and Have Fun!!! (Press q or esc to exit this screen)', BLACK, 120, size='tiny')
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    main_menu()
+                if event.key == pygame.K_ESCAPE:
+                    main_menu()
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        pygame.display.update()
+        clock.tick(15)
 
 def game_over(start_x, start_y, start_health, start_score):
     global health, score
